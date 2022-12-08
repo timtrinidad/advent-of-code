@@ -1,6 +1,6 @@
 # https://adventofcode.com/2022/day/7
 
-defmodule FsProcessor do
+defmodule DaySeven do
   @doc "Process each line of the input using recursion"
   def process_list([head | tail], sizes, path) do
     {sizes, path} = handle_line(head, sizes, path)
@@ -92,8 +92,9 @@ end
 # Read input and split by line
 {:ok, input} = File.read('2022/07/input.txt')
 lines = String.split(input, "\n")
-# Process list using module
-{sizes, path} = FsProcessor.process_list(lines, %{}, [])
+# Get full directory paths and their sizes
+{sizes, path} = DaySeven.process_list(lines, %{}, [])
+
 # Filter for directories with less than 100,000 bytes and sum
 filtered_total = Map.values(sizes) |> Enum.filter(fn x -> x < 100000 end) |> Enum.sum()
 IO.puts("Sum of small folder sizes: #{filtered_total}")
