@@ -43,7 +43,7 @@ defmodule DayTwo do
     end
   end
 
-  @doc "Return a score based on the hands played, assuming s"
+  @doc "Return a score based on the hands played"
   def getWinnerScore(opponent, me) do
     case {opponent, me} do
       # Scenarios where I lose: 0 points

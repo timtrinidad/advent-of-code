@@ -7,7 +7,7 @@ defmodule DaySeven do
     process_list(tail, sizes, path)
   end
 
-  @doc "Base case of recursion - no lines left to process"
+  # "Base case of recursion - no lines left to process"
   def process_list([], sizes, path) do
     {sizes, path}
   end
@@ -44,8 +44,8 @@ defmodule DaySeven do
     {sizes, path}
   end
 
-  @doc "Handle the 'ls' command"
-  def handle_command(["ls" | args], sizes, path) do
+  # "Handle the 'ls' command"
+  def handle_command(["ls" | _], sizes, path) do
     # Do nothing
     {sizes, path}
   end
@@ -74,8 +74,8 @@ defmodule DaySeven do
     end
   end
 
-  @doc "Ignore all other outputs"
-  def handle_output(output, sizes, path) do
+  # "Ignore all other outputs"
+  def handle_output(_, sizes, path) do
     # do nothing
     {sizes, path}
   end
@@ -93,7 +93,7 @@ end
 {:ok, input} = File.read('2022/07/input.txt')
 lines = String.split(input, "\n")
 # Get full directory paths and their sizes
-{sizes, path} = DaySeven.process_list(lines, %{}, [])
+{sizes, _} = DaySeven.process_list(lines, %{}, [])
 
 # Filter for directories with less than 100,000 bytes and sum
 filtered_total = Map.values(sizes) |> Enum.filter(fn x -> x < 100000 end) |> Enum.sum()
