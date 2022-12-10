@@ -35,6 +35,7 @@ defmodule DayNine do
         {head_pos, tails_pos} = move(dir, head_pos, tails_pos)
         new_history_entry = %{
           :curr_move => {dir, num},
+          :moves_remaining => length(next_moves),
           :head => head_pos,
           :tails => tails_pos
         }
@@ -84,17 +85,44 @@ defmodule DayNine do
     end)
     {head_pos, tails_pos}
    end
+
+   def visualize(history) do
+    edges = history |> Enum.reduce(%{:min=>%{:x=>0,:y=>0}, :max=>%{:x=>0,:y=>0}}, fn entry, acc ->
+      {head_x, head_y} = entry[:head]
+      acc = put_in(acc[:min][:x], min(acc[:min][:x], head_x))
+      acc = put_in(acc[:max][:x], max(acc[:max][:x], head_x))
+      acc = put_in(acc[:min][:y], min(acc[:min][:y], head_y))
+      put_in(acc[:max][:y], max(acc[:max][:y], head_y))
+    end)
+    history |> Enum.map(fn entry ->
+      points = entry[:tails] |> Enum.with_index |> Enum.reduce(['H': entry.head], fn {tail, idx_point}, acc ->
+        Keyword.put(acc, :"#{idx_point + 1}", tail)
+      end) |> Enum.reverse
+      grid_height = edges[:max][:y] - edges[:min][:y]
+      grid_width = edges[:max][:x] - edges[:min][:x]
+      IO.puts("\n\n\n\n\n\n\n#{entry.moves_remaining}")
+      grid = for curr_y <- 0..grid_height do
+        for curr_x <- 0..grid_width do
+          point = Enum.find(points, {:., nil}, fn x -> elem(x, 1) == {curr_x + edges[:min][:x], curr_y + edges[:min][:y]} end) |> elem(0)
+          Atom.to_charlist(point) |> Enum.at(0)
+        end
+      end
+      grid |> Enum.map(&IO.puts/1)
+      :timer.sleep(80)
+    end)
+   end
 end
 
 {:ok, input} = File.read('2022/09/input.txt')
 
-for num_tails <- [1, 9] do
-  history = DayNine.get_move_and_coordinates_history(input, num_tails)
-  history
-#    |> IO.inspect(limit: :infinity)
-    |> Enum.map(fn x -> x.tails |> Enum.at(-1) end)
-    |> MapSet.new
-#    |> IO.inspect(limit: :infinity)
-    |> MapSet.size
-    |> IO.inspect(label: "# unique coordinates for last tail with #{num_tails} tail(s)")
-end
+history = DayNine.get_move_and_coordinates_history(input, 9)
+history
+  |> Enum.map(fn x -> x.tails |> Enum.at(0) end)
+  |> MapSet.new |> MapSet.size
+  |> IO.inspect(label: "# unique coordinates for tail # 1")
+history
+  |> Enum.map(fn x -> x.tails |> Enum.at(8) end)
+  |> MapSet.new |> MapSet.size
+  |> IO.inspect(label: "# unique coordinates for tail # 9")
+
+DayNine.visualize(history)
