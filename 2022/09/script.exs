@@ -7,46 +7,39 @@ defmodule DayNine do
     moves = input |> String.trim |> String.split("\n")
       |> Enum.map(fn x ->
         [dir, num] = x |> String.split(" ")
-        num = String.to_integer(num)
-        {dir, num}
+        for _ <- 1..String.to_integer(num), do: dir
       end)
+      |> Enum.concat
     # Initialize coordinates for each of the tails
     tails_pos = for _ <- 1..num_tails, do: {0, 0}
-    # Start with current move
-    {curr_move, next_moves} = List.pop_at(moves, 0)
-    handle_direction(curr_move, next_moves, {0, 0}, tails_pos, [])
+    handle_direction(moves, {0, 0}, tails_pos, [])
    end
 
   @doc """
     Recursive function to determine new position of head and each tail based on current move.
-    Recursively runs until direction hits 0 (e.g. for "R 2", recurses to "R 1" and "R 0" before effecting next move)
+    Recursively runs until no more moves left.
     Returns a history of each move and coordinates.
   """
-  def handle_direction({dir, num}, next_moves, head_pos, tails_pos, history) do
-    cond do
-      # BASE CASE: If current move is exhausted (num is 0) and no more next moves, return history
-      num == 0 && length(next_moves) == 0 -> history
-      # If current move is exhausted, get the next move (into curr_move) and recurse
-      num == 0 ->
-        [curr_move | next_moves] = next_moves;
-        handle_direction(curr_move, next_moves, head_pos, tails_pos, history)
-      # Determine new position of head and tails
-      true ->
-        {head_pos, tails_pos} = move(dir, head_pos, tails_pos)
-        new_history_entry = %{
-          :curr_move => {dir, num},
-          :head => head_pos,
-          :tails => tails_pos
-        }
-        handle_direction(
-          # Each call only moves one spot - recurse again with one fewer number of spots to move
-          {dir, num - 1},
-          next_moves,
-          head_pos,
-          tails_pos,
-          # Add a new entry to the history
-          history ++ [new_history_entry]
-        )
+  def handle_direction([dir | next_moves], head_pos, tails_pos, history) do
+    {head_pos, tails_pos} = move(dir, head_pos, tails_pos)
+    # Add a new entry to the history
+    history = history ++ [%{
+      :curr_move => dir,
+      :head => head_pos,
+      :tails => tails_pos
+    }]
+
+    if length(next_moves) > 0 do
+      # Recurse with remaining moves
+      handle_direction(
+        next_moves,
+        head_pos,
+        tails_pos,
+        history
+      )
+    else
+      # Base case - no more moves
+      history
     end
    end
 
@@ -88,13 +81,12 @@ end
 
 {:ok, input} = File.read('2022/09/input.txt')
 
-for num_tails <- [1, 9] do
-  history = DayNine.get_move_and_coordinates_history(input, num_tails)
+history = DayNine.get_move_and_coordinates_history(input, 9)
+for tail_num <- [1, 9] do
   history
-#    |> IO.inspect(limit: :infinity)
-    |> Enum.map(fn x -> x.tails |> Enum.at(-1) end)
+    |> Enum.map(fn x -> x.tails |> Enum.at(tail_num-1) end)
     |> MapSet.new
-#    |> IO.inspect(limit: :infinity)
     |> MapSet.size
-    |> IO.inspect(label: "# unique coordinates for last tail with #{num_tails} tail(s)")
+    |> IO.inspect(label: "# unique coordinates for tail # #{tail_num}")
 end
+
