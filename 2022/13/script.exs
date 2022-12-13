@@ -37,6 +37,8 @@ defmodule DayThirteen do
     |> String.split("\n\n")
     |> Enum.map(fn x ->
       String.split(x, "\n")
+      # Some protection just in case
+      |> Enum.filter(&String.match?(&1, ~r/^[\[\],\d]+$/))
       |> Enum.map(fn y -> {result, _} = Code.eval_string(y); result end)
     end)
   end

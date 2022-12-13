@@ -55,7 +55,7 @@ defmodule DayFive do
     stacks = stacks
       |> List.replace_at(from - 1, from_stack)
       |> List.replace_at(to - 1, to_stack)
-    
+
     handle_moves(stacks, next_moves)
   end
   # No more moves - return current stack
