@@ -1,40 +1,31 @@
 # https://adventofcode.com/2022/day/14
 
 defmodule DayFourteen do
-  def count_sand(input, include_floor) do
+  @doc """
+    Given an input, keep dropping sand until the source is blocked (is_solid_floor = true)
+    or until sand reaches the abyss (is_solid_floor = false)
+  """
+  def count_sand(input, is_solid_floor) do
     wall_paths = input
     |> String.trim
     |> String.split("\n")
-    |> Enum.map(fn x -> x |> String.split(" -> ") |> Enum.map(fn x -> x |> String.split(",") |> Enum.map(&String.to_integer/1) |> List.to_tuple end) end)
-
-    {_, x_max, _, y_max} = wall_paths |> Enum.concat() |> Enum.reduce({nil, nil, nil, nil}, fn {x, y}, {x_min, x_max, y_min, y_max} ->
-      x_min = if x_min == nil, do: x, else: Enum.min([x, x_min])
-      x_max = if x_max == nil, do: x, else: Enum.max([x, x_max])
-      y_min = if y_min == nil, do: y, else: Enum.min([y, y_min])
-      y_max = if y_max == nil, do: y, else: Enum.max([y, y_max])
-      {x_min, x_max, y_min, y_max}
+    |> Enum.map(fn x -> x
+       # Break each path into numeric tuples (coordinates)
+       |> String.split(" -> ")
+       |> Enum.map(fn x -> x |> String.split(",") |> Enum.map(&String.to_integer/1) |> List.to_tuple end)
     end)
-    y_min = 0
-    y_max = y_max + 2
-    x_min = -5000
-    x_max = x_max + 5000
-    map = Enum.reduce(y_min..y_max, %{}, fn y, acc ->
-      Enum.reduce(x_min..x_max, acc, fn x, acc ->
-        row = put_in((if acc[y] == nil, do: %{}, else: acc[y]), [x], ".")
-        put_in(acc, [y], row)
-      end)
-    end)
-    map = if include_floor do
-      Enum.reduce(x_min..x_max, map, fn x, acc ->
-        put_in(acc, [y_max, x], "#")
-      end)
-    else
-      map
-    end
 
+    # Consider the highest y index to be 1 more than the highest path coordinate
+    y_max = wall_paths |> Enum.concat |> Enum.map(&elem(&1, 1)) |> Enum.max |> Kernel.+(1)
+
+    # Initialize a map of empty maps from 0 to y_max
+    map = Enum.reduce(0..y_max, %{}, fn y, acc -> put_in(acc, [y], %{}) end)
+
+    # Expand each path into individual coordinates, flatten
     wall_points = wall_paths
       |> Enum.map(fn [first_point | path] ->
         path |> Enum.flat_map_reduce(first_point, fn {point_x, point_y}, {previous_x, previous_y} ->
+          # Traverse each vertext outputting individual coordinates
           points = for x <- previous_x..point_x do
             for y <- previous_y..point_y, do: {x, y}
           end |> Enum.concat
@@ -42,41 +33,37 @@ defmodule DayFourteen do
         end) |> elem(0)
       end) |> Enum.concat
 
+    # Mark wall points in the map
     map = wall_points
       |> Enum.reduce(map, fn {x, y}, map ->
         put_in(map, [y, x], "#")
       end)
-    place_grain(map, {500, 0}, 0)
-    #render_map(map)
+
+    # Drop the first grain of sand
+    place_grain(map, {500, 0}, y_max, is_solid_floor, 0)
   end
 
-  def place_grain(map, {curr_x, curr_y}, num_grains) do
-    down = get_in(map, [curr_y + 1, curr_x])
-    diag_left = get_in(map, [curr_y + 1, curr_x - 1])
-    diag_right = get_in(map, [curr_y + 1, curr_x + 1])
+  @doc "Recursively drop grain until either a grain reaches the abyss (is_solid_floor = false) or until the source is blocked (is_solid_floor = true)"
+  def place_grain(map, {curr_x, curr_y}, floor, is_solid_floor, num_grains) do
+    # Determine if each possible next move is empty
+    down_empty? = get_in(map, [curr_y + 1, curr_x]) == nil
+    diag_left_empty? = get_in(map, [curr_y + 1, curr_x - 1]) == nil
+    diag_right_empty? = get_in(map, [curr_y + 1, curr_x + 1]) == nil
     cond do
-      down == "." -> place_grain(map, {curr_x, curr_y + 1}, num_grains)
-      diag_left == "." -> place_grain(map, {curr_x - 1, curr_y + 1}, num_grains)
-      diag_right == "." -> place_grain(map, {curr_x + 1, curr_y + 1}, num_grains)
-      down == nil -> {map, num_grains}
+      # If our current height is higher than the floor (since 0 is highest)
+      # Check down, diag_left, and then diag_right. Move grain to first of those available spots.
+      curr_y < floor && down_empty? -> place_grain(map, {curr_x, curr_y + 1}, floor, is_solid_floor, num_grains)
+      curr_y < floor && diag_left_empty? -> place_grain(map, {curr_x - 1, curr_y + 1}, floor, is_solid_floor, num_grains)
+      curr_y < floor && diag_right_empty? -> place_grain(map, {curr_x + 1, curr_y + 1}, floor, is_solid_floor, num_grains)
+      # If we've reached the abyss, stop dropping sand (base case)
+      !is_solid_floor && curr_y == floor -> {map, num_grains}
+      # If the floor is solid and we've reached it, stop moving sand. Start dropping a new one.
+      is_solid_floor && curr_y == floor -> map = put_in(map, [floor, curr_x], "o"); place_grain(map, {500, 0}, floor, is_solid_floor, num_grains + 1)
+      # If the entrance is blocked, stop dropping sand (base case)
       map[0][500] == "o" -> {map, num_grains}
-      true -> map = put_in(map, [curr_y, curr_x], "o"); place_grain(map, {500, 0}, num_grains + 1)
+      # Grain of sand has stopped moving, no available moves. Drop a new grain.
+      true -> map = put_in(map, [curr_y, curr_x], "o"); place_grain(map, {500, 0}, floor, is_solid_floor, num_grains + 1)
     end
-  end
-
-  def render_map(map) do
-    y_vals = Map.keys(map)
-      |> Enum.sort
-    x_vals = Map.keys(map[y_vals |> Enum.at(0)])
-      |> Enum.sort
-    y_vals |> Enum.map(fn y ->
-      x_vals |> Enum.map(fn x ->
-        IO.write(map[y][x])
-      end)
-      IO.puts("")
-    end)
-    IO.puts("\n\n")
-    map
   end
 end
 
@@ -84,5 +71,3 @@ end
 
 DayFourteen.count_sand(input, false) |> elem(1) |> IO.inspect(label: "# grains without floor")
 DayFourteen.count_sand(input, true) |> elem(1) |> IO.inspect(label: "# grains with floor")
-#  |> IO.inspect(charlist: :as_lists)
-#IO.inspect(a[164][368])
