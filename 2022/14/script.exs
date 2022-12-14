@@ -65,9 +65,25 @@ defmodule DayFourteen do
       true -> map = put_in(map, [curr_y, curr_x], "o"); place_grain(map, {500, 0}, floor, is_solid_floor, num_grains + 1)
     end
   end
+
+  @doc "Render a map to the screen"
+  def render_map(map) do
+    {y_min, y_max} = map |> Map.keys |> Enum.min_max
+    {x_min, x_max} = map |> Map.values |> Enum.flat_map(fn row -> row |> Map.keys end) |> Enum.min_max
+    for y <- y_min..y_max do
+      for x <- x_min-5..x_max+5 do
+        IO.write(get_in(map, [y, x]) || ".")
+      end
+      IO.puts("")
+    end
+  end
 end
 
 {:ok, input} = File.read('2022/14/input.txt')
 
-DayFourteen.count_sand(input, false) |> elem(1) |> IO.inspect(label: "# grains without floor")
-DayFourteen.count_sand(input, true) |> elem(1) |> IO.inspect(label: "# grains with floor")
+{map, num_grains} = DayFourteen.count_sand(input, false);
+DayFourteen.render_map(map);
+num_grains |> IO.inspect(label: "# grains without floor")
+{map, num_grains} = DayFourteen.count_sand(input, true)
+DayFourteen.render_map(map);
+num_grains |> IO.inspect(label: "# grains with floor")
