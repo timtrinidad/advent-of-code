@@ -1,19 +1,29 @@
-# https://adventofcode.com/2022/day/2
+import AOC
 
-defmodule DayTwo do
-  @opponent_hands %{"A": :rock, "B": :paper, "C": :scissors}
-  @my_hands %{"X": :rock, "Y": :paper, "Z": :scissors}
-  @my_outcomes %{"X": :lose, "Y": :draw, "Z": :win}
+aoc 2022, 2 do
+  @opponent_hands %{A: :rock, B: :paper, C: :scissors}
+  @my_hands %{X: :rock, Y: :paper, Z: :scissors}
+  @my_outcomes %{X: :lose, Y: :draw, Z: :win}
+
+  def p1(input) do
+    roundScoresA = processRounds(input, :hand)
+    IO.inspect(Enum.sum(roundScoresA), label: "Total score if second column signifies hand")
+  end
+
+  def p2(input) do
+    roundScoresB = processRounds(input, :outcome)
+    IO.inspect(Enum.sum(roundScoresB), label: "Total score if second column signifies outcome")
+  end
 
   @doc "For each line, calculate the round score"
   def processRounds(input, secondColumnType) do
     String.trim(input)
-      |> String.split("\n")
-      |> Enum.map(fn x ->
-        String.split(x, " ")
-        |> Enum.map(&String.to_atom/1)
-        |> getRoundScore(secondColumnType)
-      end)
+    |> String.split("\n")
+    |> Enum.map(fn x ->
+      String.split(x, " ")
+      |> Enum.map(&String.to_atom/1)
+      |> getRoundScore(secondColumnType)
+    end)
   end
 
   @doc """
@@ -25,7 +35,12 @@ defmodule DayTwo do
   """
   def getRoundScore([opponent, me], secondColumnType) do
     opponent_hand = @opponent_hands[opponent]
-    my_hand = if secondColumnType == :hand, do: @my_hands[me], else: getMyHand(opponent_hand, @my_outcomes[me])
+
+    my_hand =
+      if secondColumnType == :hand,
+        do: @my_hands[me],
+        else: getMyHand(opponent_hand, @my_outcomes[me])
+
     getWinnerScore(opponent_hand, my_hand) + getMyScore(my_hand)
   end
 
@@ -68,9 +83,3 @@ defmodule DayTwo do
     end
   end
 end
-
-{:ok, input} = File.read('2022/02/input.txt')
-roundScoresA = DayTwo.processRounds(input, :hand)
-IO.inspect(Enum.sum(roundScoresA), label: "Total score if second column signifies hand")
-roundScoresB = DayTwo.processRounds(input, :outcome)
-IO.inspect(Enum.sum(roundScoresB), label: "Total score if second column signifies outcome")
