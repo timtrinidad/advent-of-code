@@ -4,6 +4,7 @@ aoc 2022, 16 do
   def p1(input) do
     valves = parse_input(input)
 
+    :ets.new(:cache, [:set, :protected, :named_table])
     graph =
       Graph.new()
       |> Graph.add_vertices(Enum.map(valves, fn {valve, _} -> valve end))
@@ -41,22 +42,29 @@ aoc 2022, 16 do
       |> Enum.map(fn {valve, %{:rate => rate}} ->
         hops = Graph.get_shortest_path(graph, curr, valve)
         num_hops = hops |> length
-        {valve, rate / (num_hops - 1), num_hops - 1, hops}
+        {valve, rate / (num_hops - 1), num_hops - 1}
       end)
-      |> Enum.sort(fn {_, a, _, _}, {_, b, _, _} -> a <= b end)
-      |> Enum.filter(fn {_, _, num_hops, _} -> minute + num_hops < 30 end)
+      |> Enum.sort(fn {_, a, _}, {_, b, _} -> a <= b end)
+      |> Enum.filter(fn {_, _, num_hops} -> minute + num_hops < 30 end)
 
-    cond do
+    cache_key = [valves |> filter_open(false) |> Map.keys() |> Enum.sort()|> Enum.join(""), curr, minute] |> Enum.join("|")
+
+    {is_cached, total_pressure} = cond do
       minute >= 30 ->
-        total_pressure
+        {false, total_pressure}
 
       length(next_options) == 0 ->
-        cycle(valves, graph, curr, minute + 1, total_pressure + open_pressure)
+    {false, cycle(valves, graph, curr, minute + 1, total_pressure + open_pressure)}
+
+      (cache = :ets.lookup(:cache, cache_key) |> Enum.at(0)) != nil ->
+#        IO.inspect(cache, label: "Cache hit")
+        {true, cache |> elem(1)}
+
 
       true ->
-        next_options
+        val = next_options
         |> Enum.map(fn next_option ->
-          {next_valve, _, num_hops, hops} = next_option
+          {next_valve, _, num_hops} = next_option
           #          IO.inspect(hops, label: "Next valve")
           minute = minute + num_hops + 1
 
@@ -72,15 +80,11 @@ aoc 2022, 16 do
           )
         end)
         |> Enum.max()
+        {false, val}
     end
 
-    #    cond do
-    #      minute == 20 -> open_pressure
-    #      true -> curr_valve.neighbors |> Enum.map(fn neighbor ->
-    #          IO.inspect(neighbor)
-    #          open_pressure + cycle(valves, graph, neighbor, minute + 1, stack ++ [neighbor])
-    #        end) |> Enum.max
-    #    end
+    if !is_cached &&  length(next_options) > 0, do: :ets.insert(:cache, {cache_key, total_pressure})
+    total_pressure
   end
 
   def filter_open(valves, open),
