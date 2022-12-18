@@ -13,8 +13,8 @@ aoc 2022, 16 do
         end)
       )
 
-    valves_by_flow =
-      valves |> Enum.sort(fn {_, %{:rate => a}}, {_, %{:rate => b}} -> a > b end) |> IO.inspect()
+    #    valves_by_flow =
+    #      valves |> Enum.sort(fn {_, %{:rate => a}}, {_, %{:rate => b}} -> a > b end) |> IO.inspect()
 
     cycle(valves, graph, "AA", 1, 0) |> IO.inspect()
   end
@@ -32,7 +32,7 @@ aoc 2022, 16 do
     #      |> IO.inspect(label: "Open pressure")
     #    IO.inspect(total_pressure, label: "Total pressure")
 
-    curr_valve = valves[curr]
+    #    curr_valve = valves[curr]
 
     next_options =
       valves
@@ -56,7 +56,7 @@ aoc 2022, 16 do
       true ->
         next_options
         |> Enum.map(fn next_option ->
-          {next_valve, _, num_hops, hops} = next_option
+          {next_valve, _, num_hops, _hops} = next_option
           #          IO.inspect(hops, label: "Next valve")
           minute = minute + num_hops + 1
 
@@ -86,7 +86,7 @@ aoc 2022, 16 do
   def filter_open(valves, open),
     do: valves |> Map.filter(fn {_, %{:open => is_open}} -> open == is_open end)
 
-  def p2(input) do
+  def p2(_) do
   end
 
   def parse_input(input) do
