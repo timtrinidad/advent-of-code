@@ -1,5 +1,6 @@
 import AOC
 
+# https://adventofcode.com/2022/day/17
 aoc 2022, 17 do
   def p1(input) do
     simulate(input, 2022)

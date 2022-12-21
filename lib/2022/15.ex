@@ -1,5 +1,6 @@
 import AOC
 
+# https://adventofcode.com/2022/day/15
 aoc 2022, 15 do
   def p1(input) do
     sensors_and_beacons = parse_input(input)

@@ -1,5 +1,6 @@
 import AOC
 
+# https://adventofcode.com/2022/day/18
 aoc 2022, 18 do
   def p1(input) do
     blocks = parse_input(input)

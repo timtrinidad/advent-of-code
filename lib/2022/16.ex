@@ -1,5 +1,6 @@
 import AOC
 
+# https://adventofcode.com/2022/day/16
 aoc 2022, 16 do
   def p1(input) do
     parse_input(input) |> exec(30) |> IO.inspect()
