@@ -4,11 +4,14 @@ import AOC
 aoc 2022, 23 do
   def p1(input) do
     positions = parse_input(input)
-    positions = do_round(positions, [:north, :south, :west, :east], 10)
+    {positions, _} = do_round(positions, [:north, :south, :west, :east], 10, 1)
     count_empty_tiles(positions) |> IO.inspect()
   end
 
   def p2(input) do
+    positions = parse_input(input)
+    {_, num_rounds} = do_round(positions, [:north, :south, :west, :east], -1, 1)
+    IO.inspect(num_rounds)
   end
 
   def parse_input(input) do
@@ -25,9 +28,7 @@ aoc 2022, 23 do
     end)
   end
 
-  def do_round(positions, _, 0), do: positions
-
-  def do_round(positions, directions, rounds_remaining) do
+  def do_round(positions, directions, max_rounds, round_num) do
     proposed_moves =
       positions
       |> Enum.reduce([], fn pos, acc ->
@@ -39,16 +40,23 @@ aoc 2022, 23 do
 
     proposed_counts = proposed_moves |> Enum.map(&elem(&1, 1)) |> Enum.frequencies()
 
-    final_positions =
+    {final_positions, any_move} =
       proposed_moves
-      |> Enum.map(fn {orig, proposed} ->
-        if proposed_counts[proposed] == 1, do: proposed, else: orig
+      |> Enum.map_reduce(false, fn {orig, proposed}, acc ->
+        final_pos = if proposed_counts[proposed] == 1, do: proposed, else: orig
+        did_move = final_pos != orig
+        {final_pos, acc || did_move}
       end)
-      |> MapSet.new()
+
+    final_positions = MapSet.new(final_positions)
 
     [dir_head | dir_tail] = directions
-    render(final_positions)
-    do_round(final_positions, dir_tail ++ [dir_head], rounds_remaining - 1)
+
+    cond do
+      max_rounds == round_num -> {positions, round_num}
+      !any_move -> {positions, round_num}
+      true -> do_round(final_positions, dir_tail ++ [dir_head], max_rounds, round_num + 1)
+    end
   end
 
   def should_move?(positions, {x, y}) do
