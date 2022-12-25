@@ -3,18 +3,37 @@ import AOC
 # https://adventofcode.com/2022/day/24
 aoc 2022, 24 do
   def p1(input) do
+    initiate_caches()
     {blizzards, dimensions} = parse_input(input)
 
-    # Cache to keep track of already visited scenarios
-    :ets.new(:visited, [:set, :named_table])
-    # Cache of blizzard locations for a given round number
-    :ets.new(:blizzards, [:set, :named_table])
-    # Keep track of the furthest distance encountered so far
-    :ets.new(:max, [:set, :named_table])
-    bfs(dimensions, [{blizzards, {1, 0}, 0}]) |> IO.inspect()
+    {num_minutes, _} =
+      simulate_traversal(dimensions, blizzards, {1, 0}, {dimensions.width, dimensions.height + 1})
+
+    IO.inspect(num_minutes)
   end
 
   def p2(input) do
+    initiate_caches()
+    {blizzards, dimensions} = parse_input(input)
+
+    {num_minutes, blizzards} =
+      simulate_traversal(dimensions, blizzards, {1, 0}, {dimensions.width, dimensions.height + 1})
+
+    total_minutes = num_minutes |> IO.inspect()
+
+    clear_caches()
+
+    {num_minutes, blizzards} =
+      simulate_traversal(dimensions, blizzards, {dimensions.width, dimensions.height + 1}, {1, 0})
+
+    total_minutes = (total_minutes + num_minutes) |> IO.inspect()
+
+    clear_caches()
+
+    {num_minutes, _} =
+      simulate_traversal(dimensions, blizzards, {1, 0}, {dimensions.width, dimensions.height + 1})
+
+    (total_minutes + num_minutes) |> IO.inspect()
   end
 
   @doc "Parse the input into a blizzard mapset and the dimensions of the map"
@@ -43,17 +62,39 @@ aoc 2022, 24 do
     {blizzards, dimensions}
   end
 
+  @doc "Initialize all ets caches"
+  def initiate_caches() do
+    # Cache to keep track of already visited scenarios
+    :ets.new(:visited, [:set, :named_table])
+    # Cache of blizzard locations for a given round number
+    :ets.new(:blizzards, [:set, :named_table])
+    # Keep track of the furthest distance encountered so far
+    :ets.new(:max, [:set, :named_table])
+  end
+
+  @doc "Clear all ets caches (e.g. between runs)"
+  def clear_caches() do
+    :ets.delete_all_objects(:visited)
+    :ets.delete_all_objects(:blizzards)
+    :ets.delete_all_objects(:max)
+  end
+
+  @doc "Kick off a traversal from start to finish, finding shortest path length"
+  def simulate_traversal(dimensions, blizzards, start, finish) do
+    bfs(dimensions, [{blizzards, start, 0}], finish)
+  end
+
   @doc "Recursively process BFS queue"
-  def bfs(dimensions, queue) do
+  def bfs(dimensions, queue, finish) do
     # Pop queue
     [{blizzards, {curr_x, curr_y}, num_rounds} | queue] = queue
 
     # get_max_distance(curr_x, curr_y, num_rounds)
 
-    if {curr_x, curr_y} == {dimensions.width, dimensions.height + 1} do
+    if {curr_x, curr_y} == finish do
       # Base case - got to the end position
       IO.inspect("Got to end!")
-      num_rounds
+      {num_rounds, blizzards}
     else
       # Calculate the new positions of the blizzards
       # (or retrieve from cache of this round num has been encountered before)
@@ -64,13 +105,12 @@ aoc 2022, 24 do
           blizzards =
             blizzards
             |> Enum.map(fn {x, y, dir} ->
-              new =
-                case dir do
-                  ">" -> {rem(x, dimensions.width) + 1, y, dir}
-                  "<" -> {rem(x + dimensions.width - 2, dimensions.width) + 1, y, dir}
-                  "v" -> {x, rem(y, dimensions.height) + 1, dir}
-                  "^" -> {x, rem(y + dimensions.height - 2, dimensions.height) + 1, dir}
-                end
+              case dir do
+                ">" -> {rem(x, dimensions.width) + 1, y, dir}
+                "<" -> {rem(x + dimensions.width - 2, dimensions.width) + 1, y, dir}
+                "v" -> {x, rem(y, dimensions.height) + 1, dir}
+                "^" -> {x, rem(y + dimensions.height - 2, dimensions.height) + 1, dir}
+              end
             end)
             |> MapSet.new()
 
@@ -112,7 +152,7 @@ aoc 2022, 24 do
       queue = queue ++ Enum.map(next_moves, fn x -> {blizzards, x, num_rounds + 1} end)
 
       # Shouldn't ever get here - only get herer if input is unsolvable
-      if length(queue) > 0, do: bfs(dimensions, queue), else: num_rounds
+      if length(queue) > 0, do: bfs(dimensions, queue, finish), else: {num_rounds, blizzards}
     end
   end
 
