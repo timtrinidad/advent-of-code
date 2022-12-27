@@ -6,25 +6,32 @@ aoc 2022, 17 do
     simulate(input, 2022)
   end
 
-  def p2(_) do
+  def p2(input) do
+    simulate(input, 1_000_000_000_000)
   end
 
   @doc "Kick off a simulation of rocks falling for num_moves"
-  def simulate(input, num_moves) do
-    moves = input |> String.trim() |> String.graphemes()
+  def simulate(input, num_rocks) do
+    moves = input |> String.trim() |> String.graphemes() |> Enum.with_index()
     IO.inspect(moves |> length, label: "Move list length")
-    locations = make_move(MapSet.new(), generate_rock(0, 3), [0, 1, 2, 3, 4], moves, num_moves)
-    # render(locations)
+
+    :ets.new(:moves, [:set, :named_table])
+
+    locations = make_move(MapSet.new(), generate_rock(0, 3), [0, 1, 2, 3, 4], moves, num_rocks, 0)
     locations |> locations_max_y |> Kernel.+(1) |> IO.inspect(label: "Max Y")
   end
 
   @doc "Recursive function to simulate rock movement."
-  def make_move(locations, curr_rock, next_rock_types, [curr_move | next_moves], num_rocks) do
-    # Progress
-    #    if rem(num_rocks, 200) == 0, do: IO.puts("# rocks remaining: #{num_rocks}")
-
+  def make_move(
+        locations,
+        curr_rock,
+        next_rock_types,
+        [curr_move | next_moves],
+        num_rocks,
+        rock_num
+      ) do
     # Move the rock to the side if possible - coordinates don't change if it's an impossible move
-    {_, curr_rock} = move_rock(locations, curr_rock, curr_move)
+    {_, curr_rock} = move_rock(locations, curr_rock, elem(curr_move, 0))
     # Move rock down if possible
     {valid_y_move, curr_rock} = move_rock(locations, curr_rock, "v")
 
@@ -35,17 +42,64 @@ aoc 2022, 17 do
 
       # Valid move - put current move at end of list and move again
       valid_y_move == :ok ->
-        make_move(locations, curr_rock, next_rock_types, next_moves ++ [curr_move], num_rocks)
+        make_move(
+          locations,
+          curr_rock,
+          next_rock_types,
+          next_moves ++ [curr_move],
+          num_rocks,
+          rock_num
+        )
 
       # Put current rock in permanent location
       true ->
         locations = curr_rock |> Enum.reduce(locations, &MapSet.put(&2, &1))
         max_y = locations_max_y(locations)
+        full_rows =
+          locations
+          |> Enum.frequencies_by(fn {_, y} -> y end)
+          |> Enum.filter(fn {k, v} -> v == 7 end)
 
-        [curr_type | next_types] = next_rock_types
-        # IO.puts("#{curr_type}, #{curr_rock |> Enum.min_by(&elem(&1, 0)) |> elem(0)}")
+        # Keep track of if we've seen the current state before - location of the top 20 rows relative to the top
+        # and the index of the current vent direction
+        vent_index = elem(curr_move, 1)
+
+        cache_key =
+          {vent_index,
+           MapSet.filter(locations, fn {_, y} -> y > max_y - 20 end)
+           |> Enum.map(fn {x, y} -> {x, max_y - y} end)
+           |> Enum.sort()}
+
+        {num_rocks, rock_num, locations, max_y} =
+          if length(cache = :ets.lookup(:moves, cache_key)) > 0 do
+            # We have seen this state before.
+            [{_, seen_rock_num, seen_max_y}] = cache
+
+            # Determine how many rocks and rows were added since the last time we saw this state
+            delta_max_y = max_y - seen_max_y
+            delta_rock_num = rock_num - seen_rock_num
+            # How many times can we repeat this delta based on how many rocks we have left?
+            repeats = div(num_rocks - seen_rock_num, delta_rock_num)
+
+            # Increment the number of rocks seen, the number of rocks left, the location of all settled rocks,
+            # and the max_y based on the pattern
+            num_rocks = num_rocks - delta_rock_num * repeats
+            rock_num = rock_num + delta_rock_num * repeats
+
+            locations =
+              locations
+              |> Enum.map(fn {x, y} -> {x, y + delta_max_y * repeats} end)
+              |> MapSet.new()
+
+            {num_rocks, rock_num, locations, max_y + delta_max_y * repeats}
+          else
+            # Otherwise, record that we've seen this state but don't modify any variables
+            :ets.insert(:moves, {cache_key, rock_num, max_y})
+            {num_rocks, rock_num, locations, max_y}
+          end
 
         # Move curr rock type to the end
+        [curr_type | next_types] = next_rock_types
         next_rock_types = next_types ++ [curr_type]
 
         make_move(
@@ -57,7 +111,8 @@ aoc 2022, 17 do
           # Move current move to end of list
           next_moves ++ [curr_move],
           # decrement remaining rock count
-          num_rocks - 1
+          num_rocks - 1,
+          rock_num + 1
         )
     end
   end
