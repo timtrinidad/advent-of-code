@@ -55,10 +55,6 @@ aoc 2022, 17 do
       true ->
         locations = curr_rock |> Enum.reduce(locations, &MapSet.put(&2, &1))
         max_y = locations_max_y(locations)
-        full_rows =
-          locations
-          |> Enum.frequencies_by(fn {_, y} -> y end)
-          |> Enum.filter(fn {k, v} -> v == 7 end)
 
         # Keep track of if we've seen the current state before - location of the top 20 rows relative to the top
         # and the index of the current vent direction

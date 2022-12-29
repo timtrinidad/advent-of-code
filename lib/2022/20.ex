@@ -25,8 +25,8 @@ aoc 2022, 20 do
     # This list of positions will be modified rather than actually moving numbers around.
     positions = 0..(length - 1)
 
+    # Repeat the mix `times` times
     new_positions =
-      # Repeat the mix `times` times
       Enum.reduce(1..times, positions, fn _, indices ->
         nums
         |> Enum.with_index()
@@ -53,12 +53,19 @@ aoc 2022, 20 do
           |> Enum.map(fn {position, position_idx} ->
             cond do
               # If this position is the number we moved, set it to the new index
-              position_idx == num_idx -> new_position
+              position_idx == num_idx ->
+                new_position
+
               # If we moved the number forward in the list, decrement all the numbers between the two positions
-              new_position > old_position && position > old_position && position <= new_position -> position - 1
+              new_position > old_position && position > old_position && position <= new_position ->
+                position - 1
+
               # If we moved backwards, increment all numbers between the two positions
-              new_position < old_position && position < old_position && position >= new_position -> position + 1
-              true -> position
+              new_position < old_position && position < old_position && position >= new_position ->
+                position + 1
+
+              true ->
+                position
             end
           end)
         end)

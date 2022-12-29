@@ -1,5 +1,6 @@
 import AOC
 
+# https://adventofcode.com/2022/day/22
 aoc 2022, 22 do
   @compass ["E", "S", "W", "N"]
 
@@ -211,6 +212,8 @@ aoc 2022, 22 do
         |> put_in([{1 - 1, 100 + dist, "W"}], {51, 51 - dist, 2})
         |> put_in([{51 - 1, 51 - dist, "W"}], {1, 100 + dist, 2})
       end)
+
+    rules
   end
 
   @doc "Get all cells for a given column as a single Map"
@@ -230,7 +233,6 @@ aoc 2022, 22 do
         [curr_direction | next_directions],
         {x, y, _}
       ) do
-
     {next_x, next_y, compass_shift} =
       case Enum.at(@compass, curr_direction) do
         "S" -> {x, y + 1}
