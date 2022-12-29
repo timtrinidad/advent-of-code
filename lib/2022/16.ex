@@ -6,74 +6,82 @@ aoc 2022, 16 do
     parse_input(input) |> exec(30) |> IO.inspect()
   end
 
-  def p2(_) do
+  def p2(input) do
+    valves = parse_input(input)
+    closed_valves = valves |> filter_open(false) |> Map.keys()
+    half_num_closed = div(length(closed_valves), 2)
+
+    # Find all the combinations for half of the closed valves
+    # (i.e. all the combinations for which valves to assign to 1 of 2 actors)
+    combinations(half_num_closed, closed_valves)
+    |> Enum.map(fn to_open_a ->
+      # For each combination, generate a set of valves with those which can only be acted on by actor 1 and another
+      # set which can only be acted on by actor 2
+      valves_a =
+        to_open_a |> Enum.reduce(valves, fn x, valves -> put_in(valves, [x, :open], true) end)
+
+      to_open_b = MapSet.difference(MapSet.new(closed_valves), MapSet.new(to_open_a))
+
+      valves_b =
+        to_open_b |> Enum.reduce(valves, fn x, valves -> put_in(valves, [x, :open], true) end)
+
+      # Sum the two simulations
+      exec(valves_a, 26) + exec(valves_b, 26)
+    end)
+    # Find the max of all simulations
+    |> Enum.max()
+    |> IO.inspect()
   end
 
   def exec(valves, minutes) do
-    :ets.new(:cache, [:set, :named_table])
     graph =
       Graph.new()
       |> Graph.add_vertices(Enum.map(valves, fn {valve, _} -> valve end))
       |> Graph.add_edges(
-           Enum.flat_map(valves, fn {valve, %{:neighbors => neighbors}} ->
-             Enum.map(neighbors, fn neighbor -> {valve, neighbor} end)
-           end)
-         )
+        Enum.flat_map(valves, fn {valve, %{:neighbors => neighbors}} ->
+          Enum.map(neighbors, fn neighbor -> {valve, neighbor} end)
+        end)
+      )
 
     cycle(valves, graph, "AA", minutes, 0)
   end
 
-
   @doc "Recurse through minutes to open valves until we hit max minutes"
   def cycle(valves, graph, curr, minute, total_pressure) do
-    open_pressure =
-      valves
-      |> filter_open(true)
-      |> Enum.map(fn {_, %{:rate => rate}} -> rate end)
-      |> Enum.sum()
-
-    next_options =
-      valves
-      |> filter_open(false)
-      |> Map.filter(fn {valve, _} -> valve != curr end)
-      |> Enum.map(fn {valve, _} ->
-        num_hops = get_shortest_path(graph, curr, valve)
-        {valve, num_hops - 1}
-      end)
-      |> Enum.filter(fn {_, num_hops} -> minute - num_hops > 1 end)
+    next_valves = valves |> filter_open(false) |> Map.keys()
 
     cond do
-      minute <= 1 ->
+      minute <= 1 || length(next_valves) == 0 ->
         total_pressure
 
-      length(next_options) == 0 ->
-        cycle(valves, graph, curr, minute - 1, total_pressure + open_pressure)
-
       true ->
-        next_options
-        |> Enum.map(fn next_option ->
-          {next_valve, num_hops} = next_option
-          minute = minute - num_hops - 1
+        next_valves
+        |> Enum.map(fn next_valve ->
+          num_hops = get_shortest_path(graph, curr, next_valve)
+          new_minute = minute - num_hops
 
-          total_pressure =
-            total_pressure + open_pressure * (num_hops + 1) + valves[next_valve][:rate]
+          new_total_pressure = total_pressure + (minute - num_hops) * valves[next_valve][:rate]
 
-          cycle(
-            put_in(valves[next_valve][:open], true),
-            graph,
-            next_valve,
-            minute,
+          if new_minute > 0 do
+            cycle(
+              put_in(valves[next_valve][:open], true),
+              graph,
+              next_valve,
+              new_minute,
+              new_total_pressure
+            )
+          else
             total_pressure
-          )
+          end
         end)
         |> Enum.max()
     end
-
   end
 
   @doc "Find and cache the shortest path between two valves"
   def get_shortest_path(graph, from, to) do
     cache = :ets.lookup(:cache, {from, to})
+
     if length(cache) > 0 do
       cache |> Enum.at(0) |> elem(1)
     else
@@ -89,6 +97,8 @@ aoc 2022, 16 do
 
   @doc "Parse the input into an Elixir Map"
   def parse_input(input) do
+    :ets.new(:cache, [:set, :named_table])
+
     input
     |> String.trim()
     |> String.split("\n")
@@ -101,5 +111,13 @@ aoc 2022, 16 do
       out_neighbors = out_neighbors |> String.split(", ")
       Map.put(acc, valve, %{rate: flow_rate, neighbors: out_neighbors, open: flow_rate == 0})
     end)
+  end
+
+  @doc "From https://elixirforum.com/t/generate-all-combinations-having-a-fixed-array-size/26196/7"
+  def combinations(0, _), do: [[]]
+  def combinations(_, []), do: []
+
+  def combinations(size, [head | tail]) do
+    for(elem <- combinations(size - 1, tail), do: [head | elem]) ++ combinations(size, tail)
   end
 end
