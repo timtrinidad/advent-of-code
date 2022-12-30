@@ -18,7 +18,6 @@ aoc 2021, 3 do
 
   def p2(input) do
     input = parse_input(input)
-    num_lines = length(input)
     line_length = length(input |> Enum.at(0))
 
     o2 =
