@@ -12,6 +12,14 @@ aoc 2021, 7 do
   end
 
   def p2(input) do
+    input = parse_input(input)
+    {min, max} = Enum.min_max(input)
+
+    for i <- min..max do
+      # Use //1 to ensure 1..0 returns [] and not [1, 0]
+      input |> Enum.map(fn x -> Enum.sum(1..abs(x - i)//1) end) |> Enum.sum()
+    end
+    |> Enum.min()
   end
 
   @doc "Split input into a list of integers"
