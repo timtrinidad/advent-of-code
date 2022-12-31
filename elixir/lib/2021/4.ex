@@ -2,18 +2,11 @@ import AOC
 
 aoc 2021, 4 do
   def p1(input) do
-    {last_num, winning_board} = parse_input(input) |> call_numbers
-
-    sum_uncalled_nums =
-      winning_board
-      |> Enum.reduce(0, fn {num, spot}, acc ->
-        if spot.called, do: acc, else: acc + num
-      end)
-
-    last_num * sum_uncalled_nums
+    parse_input(input) |> call_numbers(:first) |> calc_board_score
   end
 
-  def p2(_input) do
+  def p2(input) do
+    parse_input(input) |> call_numbers(:last) |> calc_board_score
   end
 
   @doc "Split the input into a list of ints (called numbers) and a list of boards. Each board is a map of numbers with attributes 'called' and 'pos' with an {x, y}"
@@ -45,7 +38,7 @@ aoc 2021, 4 do
   end
 
   @doc "Go through each called number and return the winning board and last called num"
-  def call_numbers({numbers, boards}) do
+  def call_numbers({numbers, boards}, type) do
     numbers
     |> Enum.reduce_while(boards, fn num, boards ->
       boards =
@@ -55,17 +48,31 @@ aoc 2021, 4 do
           if Map.has_key?(board, num), do: put_in(board, [num, :called], true), else: board
         end)
 
-      # If there is a winning board, stop. Otherwise, continue.
-      winning_board = find_winning_board(boards)
-      if winning_board, do: {:halt, {num, winning_board}}, else: {:cont, boards}
+      case type do
+        :first ->
+          # Halt once we have any winning board (first one)
+          boards_by_status = find_winning_boards(boards)
+
+          if Map.has_key?(boards_by_status, :winners),
+            do: {:halt, {num, hd(boards_by_status.winners)}},
+            else: {:cont, boards}
+
+        :last ->
+          # Halt once there are no more losing boards
+          boards_by_status = find_winning_boards(boards)
+
+          if !Map.has_key?(boards_by_status, :losers),
+            do: {:halt, {num, hd(boards_by_status.winners)}},
+            else: {:cont, boards_by_status.losers}
+      end
     end)
   end
 
   @doc "Go through each board to see if one is a winner (i.e. the same col or row is called 5 times)"
-  def find_winning_board(boards) do
+  def find_winning_boards(boards) do
     boards
     # Go through each board and find if it's winning
-    |> Enum.find(fn board ->
+    |> Enum.group_by(fn board ->
       # Get all numbers (and their position) that are called
       called_nums = board |> Enum.filter(fn {_, spot} -> spot.called end)
 
@@ -84,8 +91,20 @@ aoc 2021, 4 do
         |> Map.values()
 
       # Is a winning board if the max frequency of row or col numbers is 5
-      (length(called_col_freq) > 0 && Enum.max(called_col_freq) == 5) ||
-        (length(called_row_freq) > 0 && Enum.max(called_row_freq) == 5)
+      if (length(called_col_freq) > 0 && Enum.max(called_col_freq) == 5) ||
+           (length(called_row_freq) > 0 && Enum.max(called_row_freq) == 5),
+         do: :winners,
+         else: :losers
     end)
+  end
+
+  def calc_board_score({last_num, board}) do
+    sum_uncalled_nums =
+      board
+      |> Enum.reduce(0, fn {num, spot}, acc ->
+        if spot.called, do: acc, else: acc + num
+      end)
+
+    last_num * sum_uncalled_nums
   end
 end
