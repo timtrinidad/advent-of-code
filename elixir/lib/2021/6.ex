@@ -14,7 +14,7 @@ aoc 2021, 6 do
     # For each day, process each fish
     1..num_days
     # Reduce the list of fish into a map of days left to number of fish
-    |> Enum.reduce(Enum.frequencies(fishes), fn day, fishes ->
+    |> Enum.reduce(Enum.frequencies(fishes), fn _, fishes ->
       fishes
       # For each "day left", reduce the day. E.g. for 7 fish with 5 days, left, go from %{5 => 7} to %{4 => 7}
       |> Enum.reduce(%{}, fn
