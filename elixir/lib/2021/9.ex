@@ -16,16 +16,15 @@ aoc 2021, 9 do
     elevations = parse_input(input)
 
     # For each low point, find the size of its basin
-    low_points =
-      find_low_points(elevations)
-      |> Enum.map(fn coord ->
-        # Map to the size of the basin
-        find_basin(elevations, [coord], MapSet.new(), MapSet.new()) |> MapSet.size()
-      end)
-      # Get the product of the top three
-      |> Enum.sort(:desc)
-      |> Enum.take(3)
-      |> Enum.product()
+    find_low_points(elevations)
+    |> Enum.map(fn coord ->
+      # Map to the size of the basin
+      find_basin(elevations, [coord], MapSet.new(), MapSet.new()) |> MapSet.size()
+    end)
+    # Get the product of the top three
+    |> Enum.sort(:desc)
+    |> Enum.take(3)
+    |> Enum.product()
   end
 
   @doc "Parse input into a map of elevations keyed by {x,y} coordinates"

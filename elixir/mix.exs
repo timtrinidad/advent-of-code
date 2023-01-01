@@ -22,7 +22,8 @@ defmodule AdventOfCode.MixProject do
   defp deps do
     [
       {:advent_of_code_utils, "~> 3.1"},
-      {:libgraph, "~> 0.16"}
+      {:libgraph, "~> 0.16"},
+      {:math, "~> 0.7.0"}
     ]
   end
 end
