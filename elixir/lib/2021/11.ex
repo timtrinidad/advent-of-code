@@ -7,7 +7,7 @@ aoc 2021, 11 do
   end
 
   def p2(input) do
-    parse_input(input)
+    parse_input(input) |> do_round(-1, 0)
   end
 
   @doc "Parse input into a map of integers keyed by {x, y} coordinates"
@@ -26,7 +26,7 @@ aoc 2021, 11 do
     end)
   end
 
-  # Base case - no more rounds. Return total number of bursts
+  # Base case - no more rounds. Return total number of bursts. If negatuve rounds given, returns round number of 1st sync'd bursting
   def do_round(_, 0, total_bursts), do: total_bursts
 
   @doc "Process a round - increment all values by one and continuously process bursts until there are no more bursts"
@@ -41,8 +41,13 @@ aoc 2021, 11 do
 
     {oct, num_bursts} = process_bursts(oct, MapSet.new())
 
-    # Recurse until no more rounds
-    do_round(oct, rounds_remaining - 1, total_bursts + num_bursts)
+    # If negative (unlimited) rounds and num_bursts is 100, all burst at the same time. Return round number.
+    if rounds_remaining < 0 && num_bursts == 100 do
+      -rounds_remaining
+    else
+      # Recurse until no more rounds
+      do_round(oct, rounds_remaining - 1, total_bursts + num_bursts)
+    end
   end
 
   @doc "Recursively process bursts until there are no more, at which point return map of current values and number of bursts processed"
