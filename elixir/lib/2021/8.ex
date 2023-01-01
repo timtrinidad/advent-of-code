@@ -41,38 +41,30 @@ aoc 2021, 8 do
     sorted = observations |> Enum.sort_by(&length/1) |> Enum.map(&MapSet.new/1)
     # The sorted-by-length list has lengths [2, 3, 4, 5, 5, 5, 6, 6, 6, 7].
     # We know lengths 2, 3, 4 and 7 correspond to numbers 1, 7, 4, and 8 respectively.
-    [one, seven, four, unk1, unk2, unk3, unk4, unk5, unk6, eight] = sorted
-    # Digits with length 5
-    length5 = [unk1, unk2, unk3]
-    # Digits with legnth 6
-    length6 = [unk4, unk5, unk6]
+    [one, _, four, _, _, _, _, _, _, _] = sorted
 
-    # Six - length 6 digit that doesn't share a letter with "one"
-    six = length6 |> Enum.find(fn x -> MapSet.size(MapSet.union(x, one)) == 7 end)
+    sorted
+    |> Enum.reduce(%{}, fn sequence, acc ->
+      num_intersection_one = MapSet.intersection(one, sequence) |> MapSet.size()
+      num_intersection_four = MapSet.intersection(four, sequence) |> MapSet.size()
 
-    # Remaining length6 is either 0 or 9. Zero must be the one that doesn't share a letter with "four"
-    zero = length6 |> Enum.find(fn x -> x != six && MapSet.size(MapSet.union(x, four)) == 7 end)
-    # Remaining length6 must be "nine"
-    nine = length6 |> Enum.find(fn x -> x != six && x != zero end)
-    # Three - length 5 digit which contains all the letters on "one"
-    three = length5 |> Enum.find(fn x -> MapSet.size(MapSet.union(x, one)) == 5 end)
+      # Implementation of https://www.reddit.com/r/adventofcode/comments/rbj87a/comment/hnoyy04/?utm_source=share&utm_medium=web2x&context=3
+      # Original implementation at https://github.com/timtrinidad/advent-of-code/blob/08cb99f2b9391ad78501bded698d47d297574a25/elixir/lib/2021/8.ex
+      number =
+        case {MapSet.size(sequence), num_intersection_four, num_intersection_one} do
+          {2, _, _} -> 1
+          {3, _, _} -> 7
+          {4, _, _} -> 4
+          {7, _, _} -> 8
+          {5, 2, _} -> 2
+          {5, 3, 1} -> 5
+          {5, 3, 2} -> 3
+          {6, 4, _} -> 9
+          {6, 3, 1} -> 6
+          {6, 3, 2} -> 0
+        end
 
-    # Remaining length 5 is either 5 or 9. The one which doesn't share a letter with nine must be 5
-    five = length5 |> Enum.find(fn x -> x != three && MapSet.size(MapSet.union(x, nine)) == 6 end)
-    # Remaining length 5 must be 2
-    two = length5 |> Enum.find(fn x -> x != three && x != five end)
-
-    dictionary = %{
-      zero => 0,
-      one => 1,
-      two => 2,
-      three => 3,
-      four => 4,
-      five => 5,
-      six => 6,
-      seven => 7,
-      eight => 8,
-      nine => 9
-    }
+      Map.put(acc, sequence, number)
+    end)
   end
 end
