@@ -1,6 +1,6 @@
-# https://adventofcode.com/2021/day/12
 import AOC
 
+# https://adventofcode.com/2021/day/12
 aoc 2021, 12 do
   def p1(input) do
     parse_input(input) |> find_paths("start", false, [], []) |> length
