@@ -9,7 +9,16 @@ aoc 2021, 13 do
   end
 
   def p2(input) do
-    parse_input(input)
+    # Fold based on all instructions and render final points
+    {dots, instructions} = parse_input(input)
+
+    instructions
+    |> Enum.reduce(dots, fn instruction, dots ->
+      fold(dots, instruction)
+    end)
+    |> render
+
+    :ok
   end
 
   @doc "Split the input into a mapset of {x, y} coordinates and a list of {x or y, val} fold instructions"
@@ -53,5 +62,20 @@ aoc 2021, 13 do
         end)
     end
     |> MapSet.new()
+  end
+
+  @doc "Render all dots based on the min/max x/y in the set"
+  def render(dots) do
+    {min_x, max_x} = dots |> Enum.map(&elem(&1, 0)) |> Enum.min_max()
+    {min_y, max_y} = dots |> Enum.map(&elem(&1, 1)) |> Enum.min_max()
+    IO.puts("\n\n")
+
+    for y <- min_y..max_y do
+      for x <- min_x..max_x do
+        if MapSet.member?(dots, {x, y}), do: IO.write("█"), else: IO.write(" ")
+      end
+
+      IO.puts("")
+    end
   end
 end
