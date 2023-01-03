@@ -3,12 +3,11 @@ import AOC
 # https://adventofcode.com/2021/day/14
 aoc 2021, 14 do
   def p1(input) do
-    {template, mapping} = parse_input(input)
-    expand(template, mapping, 10) |> calculate_score
+    parse_input(input) |> simulate(10)
   end
 
   def p2(input) do
-    parse_input(input)
+    parse_input(input) |> simulate(40)
   end
 
   @doc "Parse the input into a list of characters (template) and a map of tuple pairs to characters (mapping)"
@@ -27,27 +26,50 @@ aoc 2021, 14 do
     {String.graphemes(template), mapping}
   end
 
-  # Base case - no more rounds
-  def expand(template, _, 0), do: template
+  @doc "Expand for the given number of rounds and calc the diff b/w the highest and lowest frequencies"
+  def simulate({template, mapping}, num_rounds) do
+    # Create a list of pairs from the template. For example from ["A", "B", "C"] create [{"A", "B"}, {"B", "C"}]
+    pair_counts =
+      Enum.zip(template, tl(template))
+      # Map frequencies, e.g. %{{"A", "B"} => 1, {"B", "C"} => 1}
+      |> Enum.frequencies()
 
-  @doc "Expand the template for the given number of rounds given a mapping of character pairs to what should be inserted"
-  def expand([first_char | rest_char], mapping, num_rounds) do
-    # Starting with the second char with the previous char as the accumulator,
-    # determine what char needs to be inserted and return a list of the previous char and the inserted char.
-    # Flat map to collapse into a single array.
-    {template, last_char} =
-      Enum.flat_map_reduce(rest_char, first_char, fn char, last_char ->
-        {[last_char, mapping[{last_char, char}]], char}
-      end)
+    # Run the expansion of each pair for the given number of rounds
+    pair_frequencies = expand(pair_counts, mapping, num_rounds)
 
-    # The last char would not have been returned in the mapping - it would have been returned as the accumulator.
-    # Append to the template before recursing.
-    expand(template ++ [last_char], mapping, num_rounds - 1)
+    frequencies_sorted =
+      pair_frequencies
+      # Count the frequency of the first letter in each pair (e.g. {B,C} => 2 and {B,D} => 4 becomes B => 6)
+      |> Enum.reduce(%{}, fn {{l, _}, val}, acc -> Map.update(acc, l, val, &(&1 + val)) end)
+      # Make sure to increment the last letter in the template since it won't appear on the left side of the pair
+      |> Map.update!(Enum.at(template, -1), &(&1 + 1))
+      |> Map.values()
+      |> Enum.sort()
+
+    # Most frequent minus least frequent
+    Enum.at(frequencies_sorted, -1) - Enum.at(frequencies_sorted, 0)
   end
 
-  @doc "Calculate the difference between the most and least frequent letters."
-  def calculate_score(template) do
-    frequencies = template |> Enum.frequencies() |> Map.values() |> Enum.sort()
-    Enum.at(frequencies, -1) - Enum.at(frequencies, 0)
+  # Base case - no more rounds. Return pair counts
+  def expand(pair_counts, _, 0), do: pair_counts
+
+  @doc "Expand the pair counts based on the mapping riules for the given number of rounds"
+  def expand(pair_counts, mapping, num_rounds) do
+    # Implemented with a hint from https://www.reddit.com/r/adventofcode/comments/rhroca/comment/hosbdtu/?utm_source=share&utm_medium=web2x&context=3
+    pair_counts =
+      pair_counts
+      |> Enum.reduce(%{}, fn {pair, count}, acc ->
+        # For each pair we currently have, split it into two separate pairs with the middle char determined by the mapping
+        {left, right} = pair
+        mid = mapping[pair]
+
+        # Increment the two new pairs by the number of times the original pair exists
+        acc
+        |> Map.update({left, mid}, count, &(&1 + count))
+        |> Map.update({mid, right}, count, &(&1 + count))
+      end)
+
+    # Recurse with one less round
+    expand(pair_counts, mapping, num_rounds - 1)
   end
 end
