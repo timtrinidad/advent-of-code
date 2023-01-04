@@ -14,7 +14,14 @@ aoc 2021, 17 do
   end
 
   def p2(input) do
-    parse_input(input)
+    target_area = parse_input(input)
+
+    # Try every velocity from {0, 0} to {1000, 1000} to see the max height achieved
+    for(vx <- 0..1000, vy <- -1000..1000, do: {vx, vy})
+    |> Enum.reduce(0, fn vel, acc ->
+      res = emulate(target_area, {0, 0}, vel)
+      if res != nil, do: acc + 1, else: acc
+    end)
   end
 
   @doc """
