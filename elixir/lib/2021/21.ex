@@ -9,6 +9,7 @@ aoc 2021, 21 do
 
   def p2(input) do
     [pos_1, pos_2] = parse_input(input)
+    :ets.new(:cache, [:set, :named_table])
     emulate_p2({pos_1, 0}, {pos_2, 0}, 1) |> Tuple.to_list() |> Enum.max()
   end
 
@@ -45,23 +46,33 @@ aoc 2021, 21 do
   def emulate_p2({_, score_1}, _, _) when score_1 >= 21, do: {1, 0}
 
   def emulate_p2({pos_1, score_1}, {pos_2, score_2}, turn) do
-    # The value of each possible result of three dice rolls, along with the chances (out of 27)
-    # that the value will happen
-    [{3, 1}, {4, 3}, {5, 6}, {6, 7}, {7, 6}, {8, 3}, {9, 1}]
-    |> Enum.reduce({0, 0}, fn {roll, prob}, {acc_1, acc_2} ->
-      # For each roll value, emulate the current player's move
-      {win_1, win_2} =
-        if turn == 1 do
-          pos_1 = rem(pos_1 + roll - 1, 10) + 1
-          emulate_p2({pos_1, score_1 + pos_1}, {pos_2, score_2}, 2)
-        else
-          pos_2 = rem(pos_2 + roll - 1, 10) + 1
-          emulate_p2({pos_1, score_1}, {pos_2, score_2 + pos_2}, 1)
-        end
+    cache = :ets.lookup(:cache, {pos_1, score_1, pos_2, score_2, turn})
 
-      # Accumulate the number of p1 and p2 wins, accounting for the probability
-      # of this situation
-      {acc_1 + win_1 * prob, acc_2 + win_2 * prob}
-    end)
+    if length(cache) > 0 do
+      cache |> Enum.at(0) |> elem(1)
+    else
+      # The value of each possible result of three dice rolls, along with the chances (out of 27)
+      # that the value will happen
+      res =
+        [{3, 1}, {4, 3}, {5, 6}, {6, 7}, {7, 6}, {8, 3}, {9, 1}]
+        |> Enum.reduce({0, 0}, fn {roll, prob}, {acc_1, acc_2} ->
+          # For each roll value, emulate the current player's move
+          {win_1, win_2} =
+            if turn == 1 do
+              pos_1 = rem(pos_1 + roll - 1, 10) + 1
+              emulate_p2({pos_1, score_1 + pos_1}, {pos_2, score_2}, 2)
+            else
+              pos_2 = rem(pos_2 + roll - 1, 10) + 1
+              emulate_p2({pos_1, score_1}, {pos_2, score_2 + pos_2}, 1)
+            end
+
+          # Accumulate the number of p1 and p2 wins, accounting for the probability
+          # of this situation
+          {acc_1 + win_1 * prob, acc_2 + win_2 * prob}
+        end)
+
+      :ets.insert(:cache, {{pos_1, score_1, pos_2, score_2, turn}, res})
+      res
+    end
   end
 end
