@@ -8,7 +8,11 @@ aoc 2021, 18 do
   end
 
   def p2(input) do
-    parse_input(input)
+    numbers = parse_input(input)
+    num_numbers = length(numbers)
+    for i <- 0..num_numbers-1, j <- 0..num_numbers-1, i != j do
+      add(Enum.at(numbers, i), Enum.at(numbers, j)) |> magnitude
+    end |> Enum.max
   end
 
   @doc "Convert each line into a list of tuples {val, depth}"
@@ -114,11 +118,10 @@ aoc 2021, 18 do
     |> Enum.reverse()
   end
 
-  @doc "Calculate the magnitude of a list of {num, depth} tuples"
+  @doc "Recursively calculate the magnitude of the deepest, left-most number pair."
   # Base case - one single value at the top level
   def magnitude([{val, 0}]), do: val
 
-  @doc "Recursively calculate the magnitude of the deepest, left-most number pair."
   def magnitude(list) do
     deepest = list |> Enum.map(&elem(&1, 1)) |> Enum.max()
 
