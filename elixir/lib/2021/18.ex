@@ -10,9 +10,11 @@ aoc 2021, 18 do
   def p2(input) do
     numbers = parse_input(input)
     num_numbers = length(numbers)
-    for i <- 0..num_numbers-1, j <- 0..num_numbers-1, i != j do
+
+    for i <- 0..(num_numbers - 1), j <- 0..(num_numbers - 1), i != j do
       add(Enum.at(numbers, i), Enum.at(numbers, j)) |> magnitude
-    end |> Enum.max
+    end
+    |> Enum.max()
   end
 
   @doc "Convert each line into a list of tuples {val, depth}"
