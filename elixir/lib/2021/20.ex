@@ -8,7 +8,8 @@ aoc 2021, 20 do
   end
 
   def p2(input) do
-    parse_input(input)
+    {image, true} = parse_input(input) |> process(true, 50)
+    image |> MapSet.size()
   end
 
   @doc "Parse the input into a mapset of lit coordinates in the 'image' and a mapset of lit values in 'enhancement'"
