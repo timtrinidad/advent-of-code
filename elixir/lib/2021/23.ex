@@ -2,6 +2,8 @@ import AOC
 
 # https://adventofcode.com/2021/day/23
 aoc 2021, 23 do
+  @home_cols %{"A" => 3, "B" => 5, "C" => 7, "D" => 9}
+
   def p1(input) do
     :ets.new(:cache, [:set, :named_table])
 
@@ -10,7 +12,26 @@ aoc 2021, 23 do
   end
 
   def p2(input) do
-    parse_input(input)
+    :ets.new(:cache, [:set, :named_table])
+    map = parse_input(input)
+
+    to_insert = %{
+      {3, 3} => "D",
+      {3, 4} => "D",
+      {3, 5} => map[{3, 3}],
+      {5, 3} => "C",
+      {5, 4} => "B",
+      {5, 5} => map[{5, 3}],
+      {7, 3} => "B",
+      {7, 4} => "A",
+      {7, 5} => map[{7, 3}],
+      {9, 3} => "A",
+      {9, 4} => "C",
+      {9, 5} => map[{9, 3}]
+    }
+
+    map = Map.merge(map, to_insert)
+    emulate(map, MapSet.new(), [])
   end
 
   @doc "Parse the input into a map of letter or open spaces, keyed by {x, y}"
@@ -37,13 +58,11 @@ aoc 2021, 23 do
   @doc "DFS to find lowest score that gets all letters in the right spot"
   def emulate(map, seen, history) do
     # Memoization
-    cache = :ets.lookup(:cache, map)
+    cache = :ets.lookup(:cache, map_cache_key(map))
     cached_score = if length(cache) > 0, do: elem(Enum.at(cache, 0), 1), else: nil
 
     # Ensure we don't repeat a move
     seen = MapSet.put(seen, map)
-
-#    IO.puts(history |> Enum.reverse() |> Enum.join(""))
 
     cond do
       # This specific state is memoized - return the solved problem subset
@@ -63,8 +82,7 @@ aoc 2021, 23 do
         # Recurse to find lowest score from all next maps
         scores =
           next_maps
-          |> Enum.map(fn {map, cost, _, curr} ->
-#            history = [map[curr] | history]
+          |> Enum.map(fn {map, cost, _, _} ->
             cost + emulate(map, seen, history)
           end)
 
@@ -72,17 +90,17 @@ aoc 2021, 23 do
         score = if length(scores) > 0, do: Enum.min(scores), else: 999_999_999
 
         # Memoize
-        :ets.insert(:cache, {map, score})
+        :ets.insert(:cache, {map_cache_key(map), score})
         score
     end
   end
 
   @doc "Determine if the map is in the done state"
   def is_done(map) do
-    {map[{3, 2}], map[{3, 3}]} == {"A", "A"} &&
-      {map[{5, 2}], map[{5, 3}]} == {"B", "B"} &&
-      {map[{7, 2}], map[{7, 3}]} == {"C", "C"} &&
-      {map[{9, 2}], map[{9, 3}]} == {"D", "D"}
+    map
+    |> Enum.reduce_while(true, fn {{x, _}, char}, _ ->
+      if char == "." || x == @home_cols[char], do: {:cont, true}, else: {:halt, false}
+    end)
   end
 
   @doc "Go through each point in the map and determine a list of possible moves for that point"
@@ -95,10 +113,13 @@ aoc 2021, 23 do
           acc
         else
           # Find all possible moves for the given space along with the cost of that move
-          possible_moves(map, xy, MapSet.new(), 0)
-          |> Enum.reduce(acc, fn {dest, dist}, acc ->
-            [{xy, dest, move_cost(char, dist)} | acc]
-          end)
+          poss_moves =
+            possible_moves(map, xy, MapSet.new(), 0)
+            |> Enum.map(fn {dest, dist} ->
+              {xy, dest, move_cost(char, dist)}
+            end)
+
+          acc ++ poss_moves
         end
       end)
       # Filter out moves that aren't possible based on rules
@@ -112,15 +133,14 @@ aoc 2021, 23 do
 
         cond do
           # Destination is bottom of room and is correct x
-          dy == 3 &&
-              ((char == "A" && dx == 3) || (char == "B" && dx == 5) || (char == "C" && dx == 7) ||
-                 (char == "D" && dx == 9)) ->
+          dy != 1 && !Map.has_key?(map, {dx, dy + 1}) &&
+              (char != "." && dx == @home_cols[char]) ->
             true
 
-          # Destination is second-from-bottom of room and matches letter below it
+          # Destination matches letter below it
           # Don't have to worry about the letter below it being incorrect since that
           # move would have been filtered out as invalid
-          dy == 2 && char == map[{dx, 3}] ->
+          dy != 1 && char == map[{dx, dy + 1}] ->
             true
 
           # If not match above two cases, no moves for letter into correct space
@@ -163,32 +183,45 @@ aoc 2021, 23 do
     moves
     |> Enum.filter(fn {curr = {curr_x, curr_y}, dest = {dest_x, dest_y}, _} ->
       curr_char = map[curr]
-      # Can't move to the space outside a room
-      dest_is_right_outside_room = dest in [{3, 1}, {5, 1}, {7, 1}, {9, 1}]
 
-      # If in a hallway, can onlhy move back into a room, not into another spot in the hallway
-      moving_from_hallway_to_hallway = dest_y == 1 && curr_y == 1
+      cond do
+        # Can't move to the space outside a room
+        dest in [{3, 1}, {5, 1}, {7, 1}, {9, 1}] ->
+          false
 
-      # Don't allow moving a single space within a single room
-      moving_into_same_room = curr_x == dest_x
+        # If in a hallway, can only move back into a room, not into another spot in the hallway
+        dest_y == 1 && curr_y == 1 ->
+          false
 
-      # Can't move into a room that already has another incorrect letter
-      invalid_room =
-        curr_y == 1 && dest_y != 1 &&
-          [map[{dest_x, 2}], map[{dest_x, 3}]] not in [[".", "."], [".", curr_char]]
+        # Don't allow moving a single space within a single room
+        curr_x == dest_x ->
+          false
 
-      # Don't move a letter which is already in the correct room
-      already_in_right_spot =
-        ((curr_char == "A" && curr_x == 3) || (curr_char == "B" && curr_x == 5) ||
-           (curr_char == "C" && curr_x == 7) || (curr_char == "D" && curr_x == 9)) &&
-          (curr_y == 3 || (curr_y == 2 && map[{curr_x, 3}] == curr_char))
+        # Can't move into a room that already has another incorrect letter
+        dest_y != 1 &&
+            length(
+              Enum.filter(map, fn {{x, _}, char} ->
+                x == @home_cols[curr_char] && char not in [".", curr_char]
+              end)
+            ) > 0 ->
+          false
 
-      # Don't allow moving into the upper part of a room
-      has_empty_spot_below = dest_y == 2 && map[{dest_x, 3}] == "."
+        # Can't move into a room to which it doesn't belong
+        dest_y != 1 && dest_x != @home_cols[curr_char] ->
+          false
 
-      !dest_is_right_outside_room && !moving_from_hallway_to_hallway && !moving_into_same_room &&
-        !invalid_room &&
-        !already_in_right_spot && !has_empty_spot_below
+        # Don't move a letter which is already in the correct room
+        curr_char != "." && curr_x == @home_cols[curr_char] &&
+            (!Map.has_key?(map, {curr_x, curr_y + 1}) || map[{curr_x, curr_y + 1}] == curr_char) ->
+          false
+
+        # Don't allow moving into the upper part of a room
+        dest_y > 1 && map[{dest_x, dest_y + 1}] == "." ->
+          false
+
+        true ->
+          true
+      end
     end)
   end
 
@@ -203,8 +236,23 @@ aoc 2021, 23 do
       end
   end
 
+  def map_cache_key(map) do
+    Enum.filter(map, fn {_, char} -> char != "." end)
+    |> Enum.map(fn {xy, char} ->
+      char =
+        case char do
+          "A" -> 1
+          "B" -> 2
+          "C" -> 3
+          "D" -> 4
+        end
+
+      {xy, char}
+    end)
+  end
+
   def render(map, prev, curr) do
-    for y <- 1..3 do
+    for y <- 1..5 do
       for x <- 1..11 do
         char = Map.get(map, {x, y}, " ")
 
@@ -221,4 +269,6 @@ aoc 2021, 23 do
       IO.puts("")
     end
   end
+
+  def render(map), do: render(map, {0, 0}, {0, 0})
 end
