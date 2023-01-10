@@ -4,11 +4,23 @@ import AOC
 aoc 2021, 19 do
   def p1(input) do
     beacon_sets = parse_input(input)
-    reduce(beacon_sets) |> Enum.sort_by(&elem(&1, 2)) |> length
+    reduce(beacon_sets) |> Enum.filter(fn {_, _, _, scanner?} -> !scanner? end) |> length
   end
 
   def p2(input) do
-    parse_input(input)
+    beacon_sets = parse_input(input)
+    scanners = reduce(beacon_sets) |> Enum.filter(fn {_, _, _, scanner?} -> scanner? end)
+    num_scanners = length(scanners)
+    pairs = for i <- 0..(num_scanners - 1), j <- 0..(num_scanners - 1), i != j, do: {i, j}
+
+    # For all pairs of scanners, calculate manhattan distance and find max
+    pairs
+    |> Enum.map(fn {i, j} ->
+      {x1, y1, z1, _} = Enum.at(scanners, i)
+      {x2, y2, z2, _} = Enum.at(scanners, j)
+      abs(x1 - x2) + abs(y1 - y2) + abs(z1 - z2)
+    end)
+    |> Enum.max()
   end
 
   @doc "Parse the input into a list of list of beacons, e.g. [[{x,y,z},{x,y,z}],[{x,y,z}]]"
@@ -21,9 +33,11 @@ aoc 2021, 19 do
 
       beacons
       |> Enum.map(fn beacon ->
-        beacon |> String.split(",") |> Enum.map(&String.to_integer/1) |> List.to_tuple()
+        [x, y, z] = beacon |> String.split(",") |> Enum.map(&String.to_integer/1)
+        {x, y, z, false}
       end)
       |> MapSet.new()
+      |> MapSet.put({0, 0, 0, true})
     end)
   end
 
@@ -86,8 +100,8 @@ aoc 2021, 19 do
   @doc "Given two sets and two pairs of points, determine how to transform the second set to combine the two sets"
   def transform_and_combine(seta, setb, pa1, pa2, pb1, pb2) do
     # Determine the deltas for xyz between the two points in set a.
-    {pa1x, pa1y, pa1z} = pa1
-    {pa2x, pa2y, pa2z} = pa2
+    {pa1x, pa1y, pa1z, _} = pa1
+    {pa2x, pa2y, pa2z, _} = pa2
     dx = pa2x - pa1x
     dy = pa2y - pa1y
     dz = pa2z - pa1z
@@ -96,13 +110,13 @@ aoc 2021, 19 do
     transformation =
       transformations()
       |> Enum.find(fn transformation ->
-        {p1x, p1y, p1z} = transform(pb1, transformation)
-        {p2x, p2y, p2z} = transform(pb2, transformation)
+        {p1x, p1y, p1z, _} = transform(pb1, transformation)
+        {p2x, p2y, p2z, _} = transform(pb2, transformation)
         p2x - dx == p1x && p2y - dy == p1y && p2z - dz == p1z
       end)
 
     # Transform the reference point and get the delta for each dimension
-    {refx, refy, refz} = transform(pb1, transformation)
+    {refx, refy, refz, _} = transform(pb1, transformation)
     dx = pa1x - refx
     dy = pa1y - refy
     dz = pa1z - refz
@@ -111,8 +125,8 @@ aoc 2021, 19 do
     setb =
       setb
       |> Enum.map(fn point ->
-        {x, y, z} = point_transformed = transform(point, transformation)
-        {x + dx, y + dy, z + dz}
+        {x, y, z, scanner?} = point_transformed = transform(point, transformation)
+        {x + dx, y + dy, z + dz, scanner?}
       end)
       |> MapSet.new()
 
@@ -124,9 +138,9 @@ aoc 2021, 19 do
     # Hint from https://www.reddit.com/r/adventofcode/comments/rjpf7f/comment/hp551kv/?utm_source=share&utm_medium=web2x&context=3
     # Double for loop to process all beacons against all other beacons
     beacons
-    |> Enum.reduce(%{}, fn b1 = {x1, y1, z1}, acc ->
+    |> Enum.reduce(%{}, fn b1 = {x1, y1, z1, _}, acc ->
       beacons
-      |> Enum.reduce(acc, fn b2 = {x2, y2, z2}, acc ->
+      |> Enum.reduce(acc, fn b2 = {x2, y2, z2, _}, acc ->
         if b1 == b2 do
           acc
         else
@@ -200,14 +214,15 @@ aoc 2021, 19 do
   end
 
   @doc "Given a specific transformation from transformations(), transform the given point"
-  def transform({x, y, z}, {tx, ty, tz}) do
+  def transform({x, y, z, scanner?}, {tx, ty, tz}) do
     point = [x, y, z]
 
     {
       # Reoder, and flip
       Enum.at(point, abs(tx) - 1) * if(tx < 0, do: -1, else: 1),
       Enum.at(point, abs(ty) - 1) * if(ty < 0, do: -1, else: 1),
-      Enum.at(point, abs(tz) - 1) * if(tz < 0, do: -1, else: 1)
+      Enum.at(point, abs(tz) - 1) * if(tz < 0, do: -1, else: 1),
+      scanner?
     }
   end
 end
