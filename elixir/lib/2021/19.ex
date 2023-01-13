@@ -125,7 +125,7 @@ aoc 2021, 19 do
     setb =
       setb
       |> Enum.map(fn point ->
-        {x, y, z, scanner?} = point_transformed = transform(point, transformation)
+        {x, y, z, scanner?} = transform(point, transformation)
         {x + dx, y + dy, z + dz, scanner?}
       end)
       |> MapSet.new()
