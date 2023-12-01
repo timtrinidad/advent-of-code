@@ -7,6 +7,7 @@
    --package mr-env
    --package text
    --package containers
+   --package timeit
 -}
 {-# LANGUAGE OverloadedStrings #-}
 import System.Environment ( getArgs )
@@ -14,6 +15,9 @@ import System.Environment.MrEnv ( envAsString )
 import Data.IntMap.Strict qualified as M
 import Days (getDay)
 import Data.Typeable
+import System.TimeIt
+import Text.Printf
+import Data.List
 --import Common (readEntire)
 
 main :: IO()
@@ -34,4 +38,6 @@ main = do
   args <- getArgs
   dayString <- envAsString "DAY" "01"
   input <- loadFile dayString args
-  execPart input (getDay dayString) (head args)
+  printf "Day %s Part %s solution: " dayString (intercalate " " args)
+  (time, _) <- timeItT $ execPart input (getDay dayString) (head args)
+  printf ("CPU Time: %6.3fms\n") $ time * 1000
