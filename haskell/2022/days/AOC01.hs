@@ -13,7 +13,8 @@ part1 input = do
   print $ maximum $ map sum parsed
 
 part2 input = do
-  print "not implemented"
+  let parsed = parse_input input
+  print $ sum $ take 3 $ reverse $ sort $ map sum parsed
 
 parse_int = read::String->Int
 parse_input = map (map parse_int . lines) . splitOn "\n\n"
