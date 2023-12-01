@@ -7,10 +7,16 @@ day02 = (part1, part2)
 part1 input = do
   let parsed = parse_input input
   print $ sum $ map p1_score parsed
-    where p1_score [hand1, hand2] = hand_score (p1_hand hand2) + outcome_score (p1_hand hand1) (p1_hand hand2)
+
+p1_score [hand1, hand2] = hand_score (p1_hand hand2) + outcome_score (p1_hand hand1) (p1_hand hand2)
 
 part2 input = do
-  print "part2 not defined for day 02"
+  let parsed = parse_input input
+  print $ sum $ map p2_score parsed
+p2_score [hand1, result] = do
+  let hand2 = p2_hand (p1_hand hand1) result
+  hand_score hand2 + outcome_score (p1_hand hand1) hand2
+
 
 
 data Hand = Rock | Paper | Scissors deriving (Enum)
@@ -22,6 +28,15 @@ p1_hand "B" = Paper
 p1_hand "Y" = Paper
 p1_hand "C" = Scissors
 p1_hand "Z" = Scissors
+
+p2_hand :: Hand -> String -> Hand
+p2_hand hand "Y" = hand
+p2_hand Rock "X" = Scissors
+p2_hand Rock "Z" = Paper
+p2_hand Paper "X" = Rock
+p2_hand Paper "Z" = Scissors
+p2_hand Scissors "X" = Paper
+p2_hand Scissors "Z" = Rock
 
 hand_score :: Hand -> Int
 hand_score Rock = 1
