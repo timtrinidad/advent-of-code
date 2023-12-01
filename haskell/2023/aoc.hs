@@ -8,6 +8,8 @@
    --package text
    --package containers
    --package timeit
+   --package MissingH
+   --package regex-tdfa
 -}
 {-# LANGUAGE OverloadedStrings #-}
 import System.Environment ( getArgs )
