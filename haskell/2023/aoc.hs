@@ -20,7 +20,6 @@ import Data.Typeable
 import System.TimeIt
 import Text.Printf
 import Data.List
---import Common (readEntire)
 
 main :: IO()
 
