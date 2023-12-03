@@ -14,28 +14,31 @@ day05 = (part1, part2)
 
 part1 input = do
   let (stacks, instructions) = parseInput input
-  -- Process all instructions and get first character of each item
-  print $ map (head . snd) $ Map.toList $ execInst stacks instructions
+  print $ topOfStacks stacks instructions True
 
 part2 input = do
-  print "part2 not defined for day 05"
+  let (stacks, instructions) = parseInput input
+  print $ topOfStacks stacks instructions False
+
+-- Get the top of the resulting stacks
+topOfStacks stacks instructions = map(head . snd) . Map.toList . execInst stacks instructions
 
 -- Execute instructions recursively
-execInst :: Map Int String -> [[Int]] -> Map Int String
+execInst :: Map Int String -> [[Int]] -> Bool -> Map Int String
 -- Base case - no more instructions, return current stack
-execInst stacks [] = stacks
-execInst stacks ([num,src,dst]:xs) = do
+execInst stacks [] _  = stacks
+execInst stacks ([num,src,dst]:xs) shouldReverse = do
   -- Pull out relevant src/dst stacks
   let srcStack = Map.findWithDefault "" src stacks
   let dstStack = Map.findWithDefault "" dst stacks
   -- Split out what's being moved
   let (toMove, srcStack') = splitAt num srcStack
   -- Add it back to destination stack
-  let dstStack' = (reverse toMove) ++ dstStack
+  let dstStack' = (if shouldReverse then reverse toMove else toMove) ++ dstStack
   -- Update stack map
   let stacks' = Map.insert dst dstStack' $ Map.insert src srcStack' stacks
   -- Recurse
-  execInst stacks' xs
+  execInst stacks' xs shouldReverse
 
 -- Parse stacks and instructions separately
 parseInput input = (parseStacks stacks, parseInstructions instructions)
