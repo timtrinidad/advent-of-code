@@ -22,11 +22,33 @@ part1 input = do
     $ filter (\((x, y), num, len) ->
         -- for every surrounding coordinate (+/- 1 vertically, -1 to len horizontally), find if any coordinate
         -- exists in the "symbols" set
-        isJust $ find (\(x', y') -> Set.member((x + x', y + y')) symbols) [(x', y') | x' <- [-1..len], y' <- [-1..1]]
+        isJust $ find (\(x', y') -> Map.member((x + x', y + y')) symbols) [(x', y') | x' <- [-1..len], y' <- [-1..1]]
       ) partNums
 
 part2 input = do
-  print "part2 not defined for day 03"
+  let (partNums, symbols) = parseInput input
+  -- In part 1 we iterated on numbers and looked up symbols but now we have to do the opposite
+  -- Create a mapping of coodrinates to numbers, ensuring that a 3 digit number gets 3 coordinates in the map
+  let partNumsMap =
+        Map.fromList
+        $ foldr (\((x, y), num, len) acc ->
+            foldr (\x' acc2 -> [((x + x', y), num)] ++ acc2) acc [0..len-1]
+          ) [] partNums
+  print
+    $ sum
+    -- Product of each set
+    $ map (product . Set.toList)
+    -- Only sets of 2
+    $ filter (\x -> Set.size x == 2)
+    $ map(\(x, y) ->
+        -- Find all neighboring numbers, defaulting to 0 if a number isn't found (which is then filtered out)
+        Set.fromList $ filter (/= 0) $ map(\(x', y') ->
+            Map.findWithDefault 0 (x + x', y + y') partNumsMap
+          ) [(x', y') | x' <- [-1..1], y' <- [-1..1]]
+      )
+    $ Map.keys
+    -- Only consider 'gears' / '*'
+    $ Map.filter (== '*') symbols
 
 -- Split input by line and add row numbers.
 -- Parse out numbers and symbols.
@@ -47,11 +69,11 @@ parsePartNums input = do
 -- Collect a set of (x, y) coordinates for all symbols
 -- for each row
 parseSymbols =
-    Set.fromList
+    Map.fromList
     . foldr1 union
     . map (\(y, row)  ->
         -- generate a list of (x, y) coordinates for remaining points
-        map (\(x, _) -> (x, y))
+        map (\(x, char) -> ((x, y), char))
           -- Filter out all periods and digits
           $ filter(\(_, char) -> (not $ isDigit char) && char /= '.')
           -- Add indices (x coordinate)
