@@ -8,45 +8,45 @@ import qualified Data.Map as Map
 
 day04 = (part1, part2)
 
-part1 input = do
-  let parsed = parseInput input
-  print
-    $ sum
-    $ map (numMatchesToPoints . getNumMatches) parsed
+-- For each card, calculate the number of points it's worth and sum up the points
+part1 input = print $ sum $ map calculatePoints parsed
+  where parsed = parseInput input
+        calculatePoints = numMatchesToPoints . getNumMatches
 
-part2 input = do
-  let parsed = parseInput input
-  -- Number of matches for each card
-  let numMatches = zip [1..] $ map getNumMatches parsed
-  -- Initialize a map with key cardNum and val 1 (starting with 1 of every card)
-  let numCards = Map.fromList(map (\x -> (x, 1)) [1..(length parsed)])
-  -- Recursively count cards and sum the total values
-  print $ sum $  Map.elems $ countCards numMatches numCards
+-- Recursively count cards and sum the total values
+part2 input = print $ sum $  Map.elems $ countCards numMatches numCardsMap
+  where numMatches = zip [1..] $ map getNumMatches parsed -- Number of matches for each card
+        -- Initialize a map with key cardNum and val 1 (starting with 1 of every card)
+        numCardsMap = Map.fromList(map (\x -> (x, 1)) [1..(length parsed)])
+        parsed = parseInput input
+
+
+
+
 
 -- Process each card and update the card counter
-countCards [] acc = acc -- base case
-countCards ((idx, numMatches):cardsToProcess) acc = do
-  -- Get the number of the current card
-  let numCurrCard = Map.findWithDefault 1 idx acc
-  -- Recurse with remaining cards
-  countCards cardsToProcess
-    -- Based on the number of matches, update the counter of the subsequent cards by the number of current cards
-    $ foldr (\idx' acc2 -> Map.adjust (numCurrCard+) idx' acc2) acc [idx+1..idx+numMatches]
+countCards [] numCardsMap = numCardsMap -- base case
+countCards ((cardNum, numMatches):remainingCards) numCardsMap =
+  -- recurse with remaining cards
+  countCards remainingCards numCardsMap'
+  where numCardsMap' = foldr incrementCardCount numCardsMap cardsToUpdate -- go through all updates to the countMap
+        incrementCardCount = Map.adjust (numCurrCard+) -- updates the countMap for an index by the number of current cards we have
+        numCurrCard = Map.findWithDefault 1 cardNum numCardsMap -- the number of the current card index we have
+        cardsToUpdate = [cardNum+1..cardNum+numMatches] -- if 3 wins on card 2, this will be [3,4,5]
 
--- Convert to points based
-numMatchesToPoints x = if x > 0 then 2 ^ (x-1) else 0
--- For ea®ch line map to # of intersections between left and right
+
+-- Convert to points based on number of matches
+numMatchesToPoints x
+  | x == 0 = 0
+  | otherwise = 2 ^ (x-1)
+
+-- For each line map to # of intersections between left and right
 getNumMatches [left, right] = length $ intersect left right
 
 -- Split each line into two lists of numbers
-parseInput =
-  map (
-      map (
-          map parseInt . chunksOf 3
-        )
-      . splitOn " |"
-      -- Drop the "game" part
-      . drop 1
-      . dropWhile (/= ':')
-    )
-  . lines
+parseInput = map processLine . lines
+  where processLine = map extractNumbers
+          . splitOn " |"
+          -- Remove the "Card #:"
+          . drop 1 . dropWhile (/= ':')
+        extractNumbers = map parseInt . chunksOf 3
