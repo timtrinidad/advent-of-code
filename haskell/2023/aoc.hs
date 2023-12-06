@@ -39,8 +39,7 @@ execPart input day "2" = (snd day) input
 
 run input args dayString = do
   let result = execPart input (getDay dayString) (head args)
-  printf "Day %s Part %s solution: " dayString (intercalate " " args)
-  putStrLn result
+  printf "\nDay %s Part %s solution: %s\n\n" dayString (intercalate " " args) result
 
 main = do
   args <- getArgs
