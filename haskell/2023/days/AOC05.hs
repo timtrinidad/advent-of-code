@@ -7,7 +7,7 @@ import Text.Regex.TDFA (getAllTextMatches, (=~))
 import Data.Map.Ordered (OMap)
 import qualified Data.Map.Ordered as Map
 import Data.Maybe (fromJust)
-import Debug.Trace (trace)
+import Debug.Trace (traceShow, trace)
 import Data.Range
 
 day05 = (part1, part2)
@@ -17,13 +17,11 @@ part1 input = show $ minimum $ map findNextNumber' seeds
   where findNextNumber' = findNextNumber sections
         (seeds, sections) = parseInput input
 
--- Find the first seed that's in the allSeeds range, working backwards from locations
-part2 input = show $ find (\x -> inRanges allSeeds $ findNextNumber' x )  [0..]
+-- Find the first seed that's in the allSeeds range, using binary search
+part2 input = show $ searchLocations allSeeds reverseSections 0 maxLocation initialStep
   where
-    -- Find the next number, printing every 1000
-    findNextNumber' x
-          | x `mod` 1000 == 0 = trace ("Testing: " ++ show x) findNextNumber reverseSections x
-          | otherwise = findNextNumber reverseSections x
+    initialStep = 10000
+    maxLocation = maximum $ map (!!1) $ last sections
     -- Reverse the order of the sections and switch the location of the to/from in each list
     reverseSections = map ( map (\[to, from, len] -> [from, to, len]) ) $ reverse sections
     -- Create a range of all seed numbers
@@ -31,6 +29,19 @@ part2 input = show $ find (\x -> inRanges allSeeds $ findNextNumber' x )  [0..]
     expandSeedRange = \[x, xlen] -> (x +=* (x+xlen))
     (seeds, sections) = parseInput input
 
+-- Binary search using a min max and step
+searchLocations allSeeds sections min max step = do
+  -- Look through range and the given step
+  let res = find (\x -> inRanges allSeeds $ findNextNumber sections x) [min,min+step..max]
+  case (step, res) of
+    -- No results found at all
+    (1, Nothing) -> 0
+    -- Down to single step - this is the answer
+    (1, Just res) -> res
+    -- Found a result - reduce the step and limit search to this last chunk
+    (_, Just res) -> searchLocations allSeeds sections (res - step) res $ floor $ fromIntegral step / 2
+    -- No results found - reduce step but keep min max
+    (_, Nothing) -> searchLocations allSeeds sections min max $ floor $ fromIntegral step / 2
 
 -- Recursively convert from one type to another
 findNextNumber [] num = num -- base case - return current number
