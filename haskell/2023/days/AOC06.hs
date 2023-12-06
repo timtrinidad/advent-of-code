@@ -26,6 +26,15 @@ part2 input = show $ countWinningOutcomes raceInfo
     line = filter (/= ' ') input
 
 
--- Calculete all possible outcomes and determine which ones are past current record
-countWinningOutcomes [raceLength, currRecord] = length $ filter (>currRecord) $ possibleOutcomes raceLength
-possibleOutcomes raceLength = [(raceLength - holdMs) * holdMs | holdMs <- [0..raceLength]]
+-- Calculate number of outcomes using quadratic formula
+-- Count the number of whole integers
+countWinningOutcomes [raceTime, maxDistance] = numIntegers lowerBound upperBound
+  where
+    a = fromIntegral 1
+    b = fromIntegral raceTime
+    c = fromIntegral maxDistance
+    -- quadratic formula
+    upperBound = (b + sqrt(b^2 - 4*a*c)) / (2*a)
+    lowerBound = (b - sqrt(b^2 - 4*a*c)) / (2*a)
+    -- if max is already an integer, don't count it (subtract .01 from it before "floor")
+    numIntegers min max = floor (max - 0.01) - floor min
