@@ -8,20 +8,24 @@ import Debug.Trace
 
 day06 = (part1, part2)
 
-part1 :: String -> String
 -- Product of the number of won races
+part1 :: String -> String
 part1 input = show $ product $ numWonRaces
   where
     -- For each race, calculate how many races are won
-    numWonRaces = map (length . wonRaces) parsed
-    -- Calculete all possible outcomes and determine which ones are past current record
-    wonRaces [raceLength, currRecord] = filter (>currRecord) $ possibleOutcomes raceLength
-    possibleOutcomes raceLength = [(raceLength - holdMs) * holdMs | holdMs <- [0..raceLength]]
-    parsed = parseInput input
+    numWonRaces = map countWinningOutcomes raceInfos
+    -- Split into two lines, extract 2 numbers, and transpose into pairs based on vertical position
+    raceInfos = transpose $ map parseLine $ lines input
+    parseLine line =  map parseInt $ getAllTextMatches (line =~ "[0-9]+")
 
-part2 input = do
-  show "part2 not defined for day 06"
+-- Parse input ignoring spaces. Determine number of winning outcomes for the single race
+part2 :: String -> String
+part2 input = show $ countWinningOutcomes raceInfo
+  where
+    raceInfo = map parseInt $ getAllTextMatches (line =~ "[0-9]+")
+    line = filter (/= ' ') input
 
--- Split into two lines, extract 2 numbers, and transpose into pairs based on vertical position
-parseInput input = transpose $ map parseLine $ lines input
-  where parseLine line =  map parseInt $ getAllTextMatches (line =~ "[0-9]+")
+
+-- Calculete all possible outcomes and determine which ones are past current record
+countWinningOutcomes [raceLength, currRecord] = length $ filter (>currRecord) $ possibleOutcomes raceLength
+possibleOutcomes raceLength = [(raceLength - holdMs) * holdMs | holdMs <- [0..raceLength]]
