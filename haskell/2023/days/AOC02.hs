@@ -11,12 +11,12 @@ part1 input = do
   let invalidGames = filter (\(gameNum, draws) -> (length(filter(not . isValid) draws) > 0)) parsed
   let sumInvalidGameIds = sum $ map(fst) invalidGames
   -- Find the inverse - sum of valid games
-  print $ sum [1..length parsed] - sumInvalidGameIds
+  show $ sum [1..length parsed] - sumInvalidGameIds
 
 part2 input = do
   let parsed = parseInput input
   --
-  print $ sum $ map(product . findMaxPerColor) parsed
+  show $ sum $ map(product . findMaxPerColor) parsed
 
 isValid [num, "red"] = parseInt num <= 12
 isValid [num, "green"] = parseInt num <= 13

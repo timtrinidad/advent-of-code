@@ -3,7 +3,7 @@ module Days.AOC20 (day20) where
 day20 = (part1, part2)
 
 part1 input = do
-  print "part1 not defined for day 20"
+  show "part1 not defined for day 20"
 
 part2 input = do
-  print "part2 not defined for day 20"
+  show "part2 not defined for day 20"

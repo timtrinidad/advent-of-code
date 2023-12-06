@@ -10,10 +10,10 @@ import Data.Text.Internal.Search
 day01 = (part1, part2)
 
 part1 input = do
-  print $ sumNums $ lines input
+  show $ sumNums $ lines input
 
 part2 input = do
-  print $ sumNums $ map replaceNums $ lines input
+  show $ sumNums $ map replaceNums $ lines input
 
 -- Gets first and last int chars, converts them to an integer, and sums them
 sumNums = sum . map(\x -> read [head x, last x]) . map(filter isDigit)

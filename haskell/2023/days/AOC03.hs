@@ -14,7 +14,7 @@ day03 = (part1, part2)
 
 part1 input = do
   let (partNums, symbols) = parseInput input
-  print
+  show
     $ sum
     -- Extract second val of tuple
     $ map (\(_, num, _) -> num)
@@ -34,7 +34,7 @@ part2 input = do
         $ foldr (\((x, y), num, len) acc ->
             foldr (\x' acc2 -> [((x + x', y), num)] ++ acc2) acc [0..len-1]
           ) [] partNums
-  print
+  show
     $ sum
     -- Product of each set
     $ map (product . Set.toList)

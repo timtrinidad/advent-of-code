@@ -9,12 +9,12 @@ import qualified Data.Map as Map
 day04 = (part1, part2)
 
 -- For each card, calculate the number of points it's worth and sum up the points
-part1 input = print $ sum $ map calculatePoints parsed
+part1 input = show $ sum $ map calculatePoints parsed
   where parsed = parseInput input
         calculatePoints = numMatchesToPoints . getNumMatches
 
 -- Recursively count cards and sum the total values
-part2 input = print $ sum $  Map.elems $ countCards numMatches numCardsMap
+part2 input = show $ sum $  Map.elems $ countCards numMatches numCardsMap
   where numMatches = zip [1..] $ map getNumMatches parsed -- Number of matches for each card
         -- Initialize a map with key cardNum and val 1 (starting with 1 of every card)
         numCardsMap = Map.fromList(map (\x -> (x, 1)) [1..(length parsed)])

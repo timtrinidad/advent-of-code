@@ -10,6 +10,8 @@
    --package timeit
    --package MissingH
    --package regex-tdfa
+   --package ordered-containers
+   --package range
 -}
 {-# LANGUAGE OverloadedStrings #-}
 import System.Environment ( getArgs )
@@ -25,20 +27,25 @@ main :: IO()
 
 loadFile dayNum [_, "sample"] = do
   let fileName = "inputs/" ++ dayNum ++ ".sample.txt"
-  print $ "Loading input from " ++ fileName
+  putStrLn $ "Loading input from " ++ fileName
   readFile fileName
 loadFile dayNum [_] = do
   let fileName = "inputs/" ++ dayNum ++ ".txt"
-  print $ "Loading input from " ++ fileName
+  putStrLn $ "Loading input from " ++ fileName
   readFile fileName
 
 execPart input day "1"  = (fst day) input
 execPart input day "2" = (snd day) input
 
+run input args dayString = do
+  let result = execPart input (getDay dayString) (head args)
+  printf "Day %s Part %s solution: " dayString (intercalate " " args)
+  putStrLn result
+
 main = do
   args <- getArgs
   dayString <- envAsString "DAY" "01"
   input <- loadFile dayString args
-  printf "Day %s Part %s solution: " dayString (intercalate " " args)
-  (time, _) <- timeItT $ execPart input (getDay dayString) (head args)
+  (time, result) <- timeItT $ run input args dayString
   printf ("CPU Time: %6.3fms\n") $ time * 1000
+
