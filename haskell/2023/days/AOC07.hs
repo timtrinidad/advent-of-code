@@ -9,45 +9,68 @@ day07 = (part1, part2)
 
 data Hand = Hand { cards :: String, sortVal :: String, bid :: Int }  deriving (Show)
 
--- Sort the cards by the sortval, multiply rank by bid, and sum
-part1 input = show $ sum $ map calcWinnings $ zip [1..] $ sortBy sortValSorter parsed
-  where
-    parsed = parseInput input
-    -- Compare by 'sortVal' key
-    sortValSorter a b = compare (sortVal a) (sortVal b)
-    -- Mutiply bid by rank
-    calcWinnings (rank, hand) = bid hand * rank
+part1 input = show $ totalWinnings allowJokers input
+  where allowJokers = False
+part2 input = show $ totalWinnings allowJokers input
+  where allowJokers = True
 
-part2 input = do
-  show "part2 not defined for day 07"
+-- Sort the cards by the sortval, multiply rank by bid, and sum
+totalWinnings allowJokers input = sum $ map calcWinnings  $  zip [1..] $ sortBy sortValSorter parsed
+   where
+     parsed = parseInput allowJokers input
+     -- Compare by 'sortVal' key
+     sortValSorter a b = compare (sortVal a) (sortVal b)
+     -- Multiply bid by rank
+     calcWinnings (rank, hand) = bid hand * rank
 
 -- Create a Hand object which contains the raw card string, the bid, and a sortable value
-parseInput = map processLine . lines
+parseInput allowJokers input = map processLine $ lines input
   where
-    processLine = createHand . splitOn " "
-    createHand [cards, bidStr] = Hand { cards = cards, sortVal = sortVal, bid = parseInt bidStr }
-      where
-        sortVal = (determineType cards):(map sortableLetters cards)
+    processLine = createHand' . splitOn " "
+    createHand' = createHand allowJokers
+
+
+-- Create a Hand object which includes the original card string, the sortable card string, and the bid
+createHand allowJokers [cards, bidStr] = Hand {
+  cards = cards,
+  bid = parseInt bidStr,
+  -- prepend the hand type to the sortable card string
+  sortVal = handType:sortableCardsString
+}
+  where
+    -- Determine the hand type
+    handType = determineType allowJokers cards
+    -- Generate a sortable string where the letters are in sortable order
+    -- For a hand like '9K9KK', generates '59G9GG'
+    -- where K is replaced with sortable letter 'G'
+    sortableCardsString = map sortableLetters' cards
+    sortableLetters' = sortableLetters allowJokers
 
 -- Based on the number of each card in a hand, determine the type of hand
-determineType cards
-  | cardNums == [5] = '7' -- five of a kind
-  | cardNums == [1, 4] = '6' -- four of a kind
-  | cardNums == [2, 3] = '5' -- full house
-  | cardNums == [1, 1, 3] = '4' -- three of a kind
-  | cardNums == [1, 2, 2] = '3' -- two pair
-  | cardNums == [1, 1, 1, 2] = '2' -- one pair
+-- First of each case is for no jokers, others are for varying number of jokers (1-5)
+determineType allowJokers cards
+  | cardNums `elem` [[5], [4], [3], [2], [1], []] = '7' -- five of a kind
+  | cardNums `elem` [[1, 4], [1, 3], [1, 2], [1, 1]] = '6' -- four of a kind
+  | cardNums `elem` [[2, 3], [2, 2]] = '5' -- full house
+  | cardNums `elem` [[1, 1, 3], [1, 1, 2], [1, 1, 1]] = '4' -- three of a kind
+  | cardNums `elem` [[1, 2, 2]] = '3' -- two pair - even one joker will allow it to be promoted it to 3 of a kind
+  | cardNums `elem` [[1, 1, 1, 2], [1, 1, 1, 1]] = '2' -- one pair
   | otherwise = '1' -- high card
   where
     -- count each group and sort
     cardNums = sort $ map length groups
     -- Group each card by letter
-    groups = group $ sort cards
+    groups = group
+      $ sort
+      -- If jokers are allowed, remove them for pattern matching
+      $ if allowJokers then filter (/= 'J') cards else cards
+
 
 -- Normalize card to letters that are in order of strength (higher corresponding letter = higher strength)
-sortableLetters 'T' = 'D'
-sortableLetters 'J' = 'E'
-sortableLetters 'Q' = 'F'
-sortableLetters 'K' = 'G'
-sortableLetters 'A' = 'H'
-sortableLetters char = char
+sortableLetters _ 'T' = 'D'
+sortableLetters False 'J' = 'E'
+sortableLetters True 'J' = '0' -- If jokers are allowed, needs to have lowest value (lower than '2')
+sortableLetters _ 'Q' = 'F'
+sortableLetters _ 'K' = 'G'
+sortableLetters _ 'A' = 'H'
+sortableLetters _ char = char
