@@ -26,9 +26,8 @@ part2 input = show $ foldl1 lcm indivNumsToEnd
 -- Traverse the map iterating through each direction until we get to "ZZZ"
 traverseMap mapping (currDir:restDir) currLoc numMoves
   | endsIn 'Z' currLoc = numMoves -- base case
-  | otherwise = traverseMap mapping dirs nextLoc (numMoves+1) -- recurse
+  | otherwise = traverseMap mapping restDir nextLoc (numMoves+1) -- recurse
   where
-    dirs = (restDir ++ [currDir]) -- append current dir back to the end of the list
     nextLoc = (if currDir == 'R' then snd else fst) currToNextLoc -- pick second direction if 'R' otherwise first direction
     currToNextLoc = fromJust $ Map.lookup currLoc mapping -- mapping lookup - throw error if not found - shouldn't happen
 
@@ -36,7 +35,7 @@ traverseMap mapping (currDir:restDir) currLoc numMoves
 endsIn letter str = last str == letter
 
 -- Parse the dir and mapping separately
-parseInput input = (dir, parseMapping mapping)
+parseInput input = (cycle dir, parseMapping mapping)
   where
     [dir, mapping] = splitOn "\n\n" input
 
