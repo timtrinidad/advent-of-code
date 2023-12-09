@@ -7,17 +7,22 @@ import Debug.Trace
 
 day09 = (part1, part2)
 
-part1 input = show $ sum $ map findNext $ parseInput input
+-- Find the sum of the next number of each series
+part1 input = show $ sum $ findNext <$> parseInput input
 
-part2 input = do
-  show "part2 not defined for day 09"
+-- Reverse each series, find next, and sum
+part2 input = show $ sum $ (findNext . reverse) <$> parseInput input
 
+-- Find the next number in a given series
 findNext list
-  | (length $ nub list) == 1 = head list
-  | otherwise = last list + nextNum
+  | (length $ nub list) == 1 = head list -- base case - all numbers in the list are the same
+  | otherwise = last list + nextDiff -- the next number in the series will be the last number in the list + the diff
   where
-    diffs (a, b) = b - a
-    nextNum = findNext $ map diffs $ zip list $ tail list
+    -- recurse - zip each item with its previous item, calculate diff, and find next number
+    nextDiff = findNext $ map diffs $ zip list $ tail list
+    diffs (prev, curr) = curr - prev -- Diff to previous number
 
+-- Split input into a list of list of ints
+parseInput :: String -> [[Int]]
 parseInput = map processLine . lines
   where processLine = map parseInt . splitOn " "
