@@ -1,6 +1,5 @@
 module Days.AOC03 (day03) where
 
-import Common (parseInt)
 import Text.Regex.TDFA
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -9,6 +8,7 @@ import Data.List (foldr, foldr1, union, sort, elemIndex, find)
 import Data.List.Split (chunksOf)
 import Data.Char (isDigit)
 import Data.Maybe (fromJust, isJust)
+import Common (parseInt)
 
 day03 = (part1, part2)
 

@@ -16,7 +16,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 import System.Environment ( getArgs )
 import System.Environment.MrEnv ( envAsString )
-import Data.IntMap.Strict qualified as M
 import Days (getDay)
 import Data.Typeable
 import System.TimeIt
@@ -29,7 +28,7 @@ loadFile dayNum [_, "sample"] = do
   let fileName = "inputs/" ++ dayNum ++ ".sample.txt"
   putStrLn $ "Loading input from " ++ fileName
   readFile fileName
-loadFile dayNum [_] = do
+loadFile dayNum _ = do
   let fileName = "inputs/" ++ dayNum ++ ".txt"
   putStrLn $ "Loading input from " ++ fileName
   readFile fileName

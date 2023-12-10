@@ -1,0 +1,8 @@
+{
+    "commands": {
+        "AOC Part 1 Sample": "source env.sh && stack Main.hs 1 sample",
+        "AOC Part 1": "source env.sh && stack Main.hs 1",
+        "AOC Part 2 Sample": "source env.sh && stack Main.hs 2 sample",
+        "AOC Part 2": "source env.sh && stack Main.hs 2"
+    }
+}

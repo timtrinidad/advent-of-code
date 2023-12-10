@@ -16,6 +16,7 @@ part1 input = show $ product $ numWonRaces
     numWonRaces = map countWinningOutcomes raceInfos
     -- Split into two lines, extract 2 numbers, and transpose into pairs based on vertical position
     raceInfos = transpose $ map parseLine $ lines input
+    parseLine :: String -> [Int]
     parseLine line =  map parseInt $ getAllTextMatches (line =~ "[0-9]+")
 
 -- Parse input ignoring spaces. Determine number of winning outcomes for the single race
