@@ -6,25 +6,27 @@ import Debug.Trace
 
 day11 = (part1, part2)
 
+
+-- calculate sum of distances with each space being doubled
+part1 input = show $ galaxyDistances input 2
+-- calculate sum of distances with each space being multiplied by 1m
+part2 input = show $ galaxyDistances input 1000000
+
 -- Sum the manhattan distances between all pairs of galaxies
-part1 input = show $ sum distances
+galaxyDistances input multiplier = sum distances
   where
-    distances = map (\(i, j) -> calcDistance emptyRows emptyCols (galaxies !! i) (galaxies !! j)) pairs -- List of distances of each pair
+    distances = map (\(i, j) -> calcDistance emptyRows emptyCols (multiplier - 1) (galaxies !! i) (galaxies !! j)) pairs -- List of distances of each pair
     pairs = [(i, j) | i <- [0..numGalaxies-1], j <- [0..numGalaxies-1], i < j] -- all index pairs ignoring order
     numGalaxies = length galaxies
     (galaxies, emptyRows, emptyCols) = parseInput input
 
 -- Calculate the manhattan distance between two points, adding padding based on the empty columns/rows
-calcDistance emptyRows emptyCols (x1, y1) (x2, y2) =  dx + colPadding + dy + rowPadding
+calcDistance emptyRows emptyCols multiplier (x1, y1) (x2, y2) =  dx + (multiplier * colPadding) + dy + (multiplier * rowPadding)
   where
     dx = abs (x2 - x1) -- diff of xs
     dy = abs (y2 - y1) -- diff of ys
     colPadding = length $ filter (\col -> col > min y1 y2 && col < max y1 y2) emptyCols -- num cols between y points
     rowPadding = length $ filter (\row -> row > min x1 x2 && row < max x1 x2) emptyRows -- num rows between x points
-
-
-part2 input = do
-  show "part2 not defined for day 11"
 
 -- Parse the input into 
 --   - a list of points of galaxies in the unexpanded map
