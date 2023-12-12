@@ -1,33 +1,49 @@
 module AOC12 (day12) where
+import Data.List.Split (splitOn)
 import Common (parseInt)
-import Data.List (group)
+import Data.List (intercalate)
 import Debug.Trace
 
 day12 :: (String -> String, String -> String)
 day12 = (part1, part2)
 
 part1 :: String -> String
-part1 input = show $ sum $ map numArrangements records -- For each record, get the number of possible arragements, and sum
+part1 input = show $ sum $ map countPossibilities records
   where
-    numArrangements (slots, nums) =
-      length -- total number found
-      $ filter (==nums) -- filter to ones that match the nums for this record
-      $ map convertToNums -- convert to a number record
-      $ expandPossibilities slots -- generatate all possible combinations
-    convertToNums = map length . wordsBy (=='.') -- remove periods and count each group of '#'
     records = parseInput input
 
-
 part2 :: String -> String
-part2 input = do
-  show "part2 not defined for day 12"
+part2 input = "todo"
 
--- Recursively generate possibilties, converting each ? into two possible strings (# or .)
-expandPossibilities :: String -> [String]
-expandPossibilities [] = [""]
-expandPossibilities ('?':xs) = map ('.' :) substring ++ map ('#' :) substring
-  where substring = expandPossibilities xs
-expandPossibilities (x:xs) = map (x :) $ expandPossibilities xs
+-- Generate all valid diagrams and count them
+countPossibilities :: (String, [Int]) -> Int
+countPossibilities (slots, workingGroups) = length $ filter isValid diagrams 
+  where
+    isValid = and . zipWith (\a b -> a == '?' || a == b) slots -- Check to make sure that this diagram matches with what we know
+    diagrams = map (generateDiagram workingGroups) $ intComposition (numWorkingGroups + 1) numUnknownBroken  -- generate all possible slots given the order of working slot groups
+    numUnknownBroken = numTotal - numWorking - numKnownBroken -- remaining slots
+    numKnownBroken = numWorkingGroups - 1 -- must be at least one known broken between each group
+    numWorkingGroups = length workingGroups -- total number of working groups
+    numTotal = length slots -- total nunmber of slots
+    numWorking = sum workingGroups -- total number of known working slots
+
+-- Given a list of working slot groups and broken slot groups, generate a list of possible strings
+generateDiagram :: [Int] -> [Int] -> String
+generateDiagram workingSlots brokenSlots = concat $ zipWith combine brokenSlots' (workingSlots ++ [0])
+  where
+    combine numBroken numWorking = replicate numBroken '.' ++ replicate numWorking '#' -- generate the string
+    -- Inject a broken spring between all working springs (on all except the first and last)
+    brokenSlots' = [fstBrokenSlot] ++ midBrokenSlots ++ [lastBrokenSlot]
+    midBrokenSlots = map (+1) $ init rstBrokenSlots
+    lastBrokenSlot = last rstBrokenSlots
+    (fstBrokenSlot:rstBrokenSlots) = brokenSlots
+
+
+-- Find all ways to have numInts integers to add up to n
+-- https://stackoverflow.com/questions/39074828/composition-of-integer-in-c-and-haskell
+intComposition :: Int -> Int -> [[Int]]
+intComposition 1 rest = [[rest]]
+intComposition numInts n = [x:rest | x <- [0..n], rest <- intComposition (numInts-1) (n-x)]
 
 parseInput :: String -> [(String, [Int])]
 parseInput = map processLine . lines

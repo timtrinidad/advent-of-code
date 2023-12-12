@@ -1,10 +1,8 @@
 import System.Environment ( getArgs )
 import System.Environment.MrEnv ( envAsString )
 import Days (getDay)
-import Data.Typeable
-import System.TimeIt
-import Text.Printf
-import Data.List
+import System.TimeIt ( timeItT )
+import Text.Printf ( printf )
 
 main :: IO()
 
@@ -17,17 +15,17 @@ loadFile dayNum _ = do
   putStrLn $ "Loading input from " ++ fileName
   readFile fileName
 
-execPart input day "1"  = (fst day) input
-execPart input day "2" = (snd day) input
+execPart input day "1"  = fst day input
+execPart input day "2" = snd day input
 
 run input args dayString = do
   let result = execPart input (getDay dayString) (head args)
-  printf "\nDay %s Part %s solution: %s\n\n" dayString (intercalate " " args) result
+  printf "\nDay %s Part %s solution: %s\n\n" dayString (unwords args) result
 
 main = do
   args <- getArgs
   dayString <- envAsString "DAY" "01"
   input <- loadFile dayString args
-  (time, result) <- timeItT $ run input args dayString
-  printf ("CPU Time: %6.3fms\n") $ time * 1000
+  (time, _) <- timeItT $ run input args dayString
+  printf "CPU Time: %6.3fms\n" $ time * 1000
 
