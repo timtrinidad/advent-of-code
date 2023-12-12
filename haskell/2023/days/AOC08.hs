@@ -1,4 +1,4 @@
-module Days.AOC08 (day08) where
+module AOC08 (day08) where
 
 import Data.List (foldl1, isSuffixOf, scanl)
 import Data.List.Split (splitOn, splitOneOf)

@@ -1,4 +1,4 @@
-module Days.AOC02 (day02) where
+module AOC02 (day02) where
 
 import Data.List.Split (splitOneOf, chunksOf)
 

@@ -68,4 +68,4 @@ extra-deps:
 # compiler-check: newer-minor
 
 ghc-options:
-  "*": -fno-warn-missing-signatures
+  "$everything": -fno-warn-missing-signatures -fno-warn-incomplete-patterns

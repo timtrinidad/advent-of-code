@@ -1,4 +1,4 @@
-module Days.AOC01 (day01) where
+module AOC01 (day01) where
 
 import Data.Char
 import Text.Regex.TDFA

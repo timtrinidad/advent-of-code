@@ -1,5 +1,4 @@
-module Days.AOC12 (day12) where
-import Data.List.Split (splitOn, wordsBy)
+module AOC12 (day12) where
 import Common (parseInt)
 import Data.List (group)
 import Debug.Trace

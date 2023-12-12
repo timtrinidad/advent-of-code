@@ -1,4 +1,4 @@
-module Days.AOC04 (day04) where
+module AOC04 (day04) where
 
 import Data.List.Split (splitOneOf, chunksOf, splitOn)
 import Data.List (intersect)

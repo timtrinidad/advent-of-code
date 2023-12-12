@@ -1,4 +1,4 @@
-module Days.AOC11 (day11) where
+module AOC11 (day11) where
 
 -- import Data.List.Split (splitAt)
 import Data.List (foldr, transpose)

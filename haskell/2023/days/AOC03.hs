@@ -1,4 +1,4 @@
-module Days.AOC03 (day03) where
+module AOC03 (day03) where
 
 import Text.Regex.TDFA
 import Data.Map (Map)

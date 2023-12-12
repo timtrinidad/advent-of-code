@@ -1,4 +1,4 @@
-module Days.AOC05 (day05) where
+module AOC05 (day05) where
 
 import Data.List (find, foldr1, foldl, sortOn, union)
 import Data.List.Split (splitOn, chunksOf)

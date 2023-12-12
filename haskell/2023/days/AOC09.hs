@@ -1,4 +1,4 @@
-module Days.AOC09 (day09) where
+module AOC09 (day09) where
 
 import Data.List (zip, nub)
 import Data.List.Split (splitOn)

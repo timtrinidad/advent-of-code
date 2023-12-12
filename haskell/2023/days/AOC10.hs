@@ -1,4 +1,4 @@
-module Days.AOC10 (day10) where
+module AOC10 (day10) where
 import Data.Maybe (fromJust)
 import Data.List (elemIndex, find)
 import Data.Map (Map, (!))

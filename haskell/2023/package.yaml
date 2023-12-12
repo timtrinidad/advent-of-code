@@ -43,7 +43,9 @@ ghc-options:
 - -Wredundant-constraints
 
 library:
-  source-dirs: lib
+  source-dirs:
+    - lib
+    - days
 
 executables:
   haskell-exe:

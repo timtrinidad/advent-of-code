@@ -1,0 +1,10 @@
+cradle:
+  stack:
+    - path: "./lib"
+      component: "aoc2023:lib"
+
+    - path: "./days"
+      component: "aoc2023:lib"
+
+    - path: "././Main.hs"
+      component: "aoc2023:exe:haskell-exe"

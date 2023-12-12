@@ -1,4 +1,4 @@
-module Days.AOC14 (day14) where
+module AOC14 (day14) where
 
 day14 = (part1, part2)
 

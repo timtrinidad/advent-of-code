@@ -1,4 +1,4 @@
-module Days.AOC06 (day06) where
+module AOC06 (day06) where
 
 import Text.Regex.TDFA (getAllTextMatches, (=~))
 import Data.List.Split (chunksOf)

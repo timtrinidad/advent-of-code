@@ -1,19 +1,3 @@
-#!/usr/bin/env stack
-{- stack script
-   --resolver lts-21.13
-   --package turtle
-   --package base
-   --package split
-   --package mr-env
-   --package text
-   --package containers
-   --package timeit
-   --package MissingH
-   --package regex-tdfa
-   --package ordered-containers
-   --package range
--}
-{-# LANGUAGE OverloadedStrings #-}
 import System.Environment ( getArgs )
 import System.Environment.MrEnv ( envAsString )
 import Days (getDay)

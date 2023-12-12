@@ -1,4 +1,4 @@
-module Days.AOC07 (day07) where
+module AOC07 (day07) where
 
 import Data.List (group, sort, sortBy)
 import Data.List.Split (splitOn)

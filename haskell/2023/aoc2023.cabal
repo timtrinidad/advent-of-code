@@ -20,12 +20,40 @@ source-repository head
   location: https://github.com/githubuser/haskell
 
 library
+  exposed-modules:
+      Common
+      Days
+      AOC01
+      AOC02
+      AOC03
+      AOC04
+      AOC05
+      AOC06
+      AOC07
+      AOC08
+      AOC09
+      AOC10
+      AOC11
+      AOC12
+      AOC13
+      AOC14
+      AOC15
+      AOC16
+      AOC17
+      AOC18
+      AOC19
+      AOC20
+      AOC21
+      AOC22
+      AOC23
+      AOC24
   other-modules:
       Paths_aoc2023
   autogen-modules:
       Paths_aoc2023
   hs-source-dirs:
       lib
+      days
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       MissingH
