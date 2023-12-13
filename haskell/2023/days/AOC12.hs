@@ -1,52 +1,92 @@
 module AOC12 (day12) where
-import Data.List.Split (splitOn)
 import Common (parseInt)
-import Data.List (intercalate)
+import Data.List (group, intercalate)
+import Data.List.Split (splitOn, wordsBy)
 import Debug.Trace
 
 day12 :: (String -> String, String -> String)
 day12 = (part1, part2)
 
+data Record = Record {
+  diagram :: String,
+  workingGroups :: [Int],
+  numWorkingGroups :: Int,
+  numTotal :: Int,
+  numWorking :: Int,
+  numKnownBroken :: Int,
+  numBroken :: Int
+} deriving (Show)
+
+-- For each record, get the number of possible arragements, and sum
 part1 :: String -> String
-part1 input = show $ sum $ map countPossibilities records
+part1 input = show $ sum $ map numArrangements records 
   where
-    records = parseInput input
+    records = parseInput 1 input
 
 part2 :: String -> String
-part2 input = "todo"
+part2 input = show $ sum $ map handleRecord $ zip [1..] records
+  where 
+    handleRecord (idx, record) = traceShow idx $ numArrangements record
+    records = parseInput 5 input
+    -- 4 - 4.7s
 
--- Generate all valid diagrams and count them
-countPossibilities :: (String, [Int]) -> Int
-countPossibilities (slots, workingGroups) = length $ filter isValid diagrams 
+
+-- For a given diagram and list of working groups, count the total number of valid arrangements
+numArrangements :: Record -> Int
+numArrangements record =
+      length
+      $ filter (==(workingGroups record)) -- filter to ones that match the nums for this record
+      $ map convertToNums allPossibilities -- convert to a number record
   where
-    isValid = and . zipWith (\a b -> a == '?' || a == b) slots -- Check to make sure that this diagram matches with what we know
-    diagrams = map (generateDiagram workingGroups) $ intComposition (numWorkingGroups + 1) numUnknownBroken  -- generate all possible slots given the order of working slot groups
-    numUnknownBroken = numTotal - numWorking - numKnownBroken -- remaining slots
-    numKnownBroken = numWorkingGroups - 1 -- must be at least one known broken between each group
-    numWorkingGroups = length workingGroups -- total number of working groups
-    numTotal = length slots -- total nunmber of slots
-    numWorking = sum workingGroups -- total number of known working slots
+    allPossibilities = expandPossibilities record (diagram record) "" -- generatate all possible combinations
+    convertToNums = map length . wordsBy (=='.') -- remove periods and count each group of '#'
 
--- Given a list of working slot groups and broken slot groups, generate a list of possible strings
-generateDiagram :: [Int] -> [Int] -> String
-generateDiagram workingSlots brokenSlots = concat $ zipWith combine brokenSlots' (workingSlots ++ [0])
+-- Recursively generate possibilties, converting each ? into two possible strings (# or .)
+expandPossibilities :: Record -> String -> String -> [String]
+expandPossibilities _ [] partialDiagram = [reverse partialDiagram]
+expandPossibilities record ('?':xs) partialDiagram = expansionBroken ++ expansionWorking
   where
-    combine numBroken numWorking = replicate numBroken '.' ++ replicate numWorking '#' -- generate the string
-    -- Inject a broken spring between all working springs (on all except the first and last)
-    brokenSlots' = [fstBrokenSlot] ++ midBrokenSlots ++ [lastBrokenSlot]
-    midBrokenSlots = map (+1) $ init rstBrokenSlots
-    lastBrokenSlot = last rstBrokenSlots
-    (fstBrokenSlot:rstBrokenSlots) = brokenSlots
+    expansionBroken = if isValid record $ reverse optionBroken then expandPossibilities record xs optionBroken else []
+    optionBroken = '.':partialDiagram
+    expansionWorking = if isValid record $ reverse optionWorking then expandPossibilities record xs optionWorking else []
+    optionWorking = '#':partialDiagram
+expandPossibilities record (x:xs) partialDiagram = expandPossibilities record xs (x:partialDiagram)
 
-
--- Find all ways to have numInts integers to add up to n
--- https://stackoverflow.com/questions/39074828/composition-of-integer-in-c-and-haskell
-intComposition :: Int -> Int -> [[Int]]
-intComposition 1 rest = [[rest]]
-intComposition numInts n = [x:rest | x <- [0..n], rest <- intComposition (numInts-1) (n-x)]
-
-parseInput :: String -> [(String, [Int])]
-parseInput = map processLine . lines
+isValid record partialDiagram = -- traceShow (diagram record) $ traceShow (partialDiagram)
+    and [
+        notTooManyBroken, 
+        notTooManyWorking, 
+        matchesWorkingGroups, 
+        notTooManyWorkingGroups,
+        notTooManyWorkingGroupsLeft,
+        lastGroupNotTooLarge
+      ]
   where
-    processLine = parseNums . splitOn " " -- split by space
-    parseNums [slots, nums] = (slots, map parseInt $ splitOn "," nums) -- convert right side to list of ints
+    notTooManyWorkingGroupsLeft = length partialDiagram + toBeAllocated <= numTotal record
+    toBeAllocated = sum workingGroupsLeft + (length workingGroupsLeft - 1)
+    workingGroupsLeft = drop (length partialWorkingGroups + 1) workingGroups'
+    notTooManyWorkingGroups = length partialWorkingGroups <= numWorkingGroups record
+    notTooManyBroken = (numBroken record) >= (length $ filter (=='.') partialDiagram)
+    notTooManyWorking = (numWorking record) >= (length $ filter (=='#') partialDiagram)
+    lastGroupNotTooLarge = if last partialDiagram == '.' then True else (length (takeWhile (=='#') $ reverse partialDiagram)) <= (head $ drop (length partialWorkingGroups) workingGroups')
+    matchesWorkingGroups = and $ zipWith (==) workingGroups' partialWorkingGroups
+    workingGroups' = workingGroups record
+    partialWorkingGroups = (if last partialDiagram == '.' then id else init) $ map length $ wordsBy (=='.') partialDiagram
+
+parseInput :: Int -> String -> [Record]
+parseInput multiplier = map processLine . lines
+  where processLine = toRecord multiplier . splitOn " " -- split by space
+
+toRecord :: Int -> [String] -> Record
+toRecord multiplier [diagramOriginal, nums] = Record {
+  diagram = diagram',
+  workingGroups = workingGroups',
+  numWorkingGroups = length workingGroups',
+  numWorking = numWorking',
+  numTotal = length diagram',
+  numBroken = length diagram' - numWorking',
+  numKnownBroken = length $ filter (=='.') diagram'
+} where 
+    diagram' = intercalate "?" $ replicate multiplier diagramOriginal
+    workingGroups' = concat $ replicate multiplier $ map parseInt $ splitOn "," nums
+    numWorking' = sum workingGroups'
