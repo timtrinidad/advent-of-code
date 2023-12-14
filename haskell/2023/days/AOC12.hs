@@ -1,51 +1,61 @@
 module AOC12 (day12) where
+import Data.List.Split (splitOn, wordsBy)
 import Common (parseInt)
 import Data.List (group, intercalate)
-import Data.List.Split (splitOn, wordsBy)
 import Debug.Trace
+import Turtle.Format (x)
 
 day12 :: (String -> String, String -> String)
 day12 = (part1, part2)
 
-data Record = Record {
-  diagram :: String,
-  workingGroups :: [Int],
-  numWorkingGroups :: Int,
-  numTotal :: Int,
-  numWorking :: Int,
-  numKnownBroken :: Int,
-  numBroken :: Int
-} deriving (Show)
-
 -- For each record, get the number of possible arragements, and sum
 part1 :: String -> String
+<<<<<<< Updated upstream
 part1 input = show $ sum $ map numArrangements records 
+=======
+part1 input = show $ sum $ map numArrangements $ parseInput 1 input
+>>>>>>> Stashed changes
   where
-    records = parseInput 1 input
+    
 
 part2 :: String -> String
+<<<<<<< Updated upstream
 part2 input = show $ sum $ map handleRecord $ zip [1..] records
   where 
     handleRecord (idx, record) = traceShow idx $ numArrangements record
     records = parseInput 5 input
     -- 4 - 4.7s
+=======
+part2 input = show $ sum $ zipWith (curry handleRecord) [1..] $ parseInput 5 input
+  where
+    handleRecord (idx, record) = traceShow idx $ numArrangements record
+>>>>>>> Stashed changes
 
 
 -- For a given diagram and list of working groups, count the total number of valid arrangements
-numArrangements :: Record -> Int
-numArrangements record =
+numArrangements (diagram, workingGroups) =
       length
+<<<<<<< Updated upstream
       $ filter (==(workingGroups record)) -- filter to ones that match the nums for this record
+=======
+      -- $ traceShow filteredOut
+      $ filter (==workingGroups) -- filter to ones that match the nums for this record
+>>>>>>> Stashed changes
       $ map convertToNums allPossibilities -- convert to a number record
   where
-    allPossibilities = expandPossibilities record (diagram record) "" -- generatate all possible combinations
+    allPossibilities = expandPossibilities diagram workingGroups -- generatate all possible combinations
     convertToNums = map length . wordsBy (=='.') -- remove periods and count each group of '#'
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 
 -- Recursively generate possibilties, converting each ? into two possible strings (# or .)
-expandPossibilities :: Record -> String -> String -> [String]
-expandPossibilities _ [] partialDiagram = [reverse partialDiagram]
-expandPossibilities record ('?':xs) partialDiagram = expansionBroken ++ expansionWorking
+expandPossibilities :: String -> [Int] -> [String]
+expandPossibilities [] _ = [""]
+expandPossibilities (currSpring:restSprings) workingGroups = do notWorking ++ working
   where
+<<<<<<< Updated upstream
     expansionBroken = if isValid record $ reverse optionBroken then expandPossibilities record xs optionBroken else []
     optionBroken = '.':partialDiagram
     expansionWorking = if isValid record $ reverse optionWorking then expandPossibilities record xs optionWorking else []
@@ -72,9 +82,25 @@ isValid record partialDiagram = -- traceShow (diagram record) $ traceShow (parti
     matchesWorkingGroups = and $ zipWith (==) workingGroups' partialWorkingGroups
     workingGroups' = workingGroups record
     partialWorkingGroups = (if last partialDiagram == '.' then id else init) $ map length $ wordsBy (=='.') partialDiagram
+=======
+    notWorking = if currSpring == '#' then [] else map ('.':) $ expandPossibilities restSprings workingGroups
+    working = expandWorkingPossibilities (currSpring:restSprings) workingGroups
 
-parseInput :: Int -> String -> [Record]
+expandWorkingPossibilities _ [] = []
+expandWorkingPossibilities diagram (currWorkingGroup:restWorkingGroups)
+  | workingGroupIsValid currWorkingGroup diagram = map (workingGroupString ++) substring
+  |  otherwise = []
+  where
+    workingGroupString = replicate currWorkingGroup '#'
+    workingGroupIsValid numWorking diagram' =  nextCharsAreAvalid numWorking diagram' && hasEnoughCharsLeft numWorking diagram'
+    nextCharsAreAvalid numWorking diagram' = all (`elem` ['#', '?']) $ take numWorking diagram'
+    hasEnoughCharsLeft numWorking diagram' = numWorking <= length diagram'
+    substring = expandPossibilities (drop currWorkingGroup diagram) restWorkingGroups
+>>>>>>> Stashed changes
+
+parseInput :: Int -> String -> [(String, [Int])]
 parseInput multiplier = map processLine . lines
+<<<<<<< Updated upstream
   where processLine = toRecord multiplier . splitOn " " -- split by space
 
 toRecord :: Int -> [String] -> Record
@@ -90,3 +116,8 @@ toRecord multiplier [diagramOriginal, nums] = Record {
     diagram' = intercalate "?" $ replicate multiplier diagramOriginal
     workingGroups' = concat $ replicate multiplier $ map parseInt $ splitOn "," nums
     numWorking' = sum workingGroups'
+=======
+  where
+    processLine = parseNums . splitOn " " -- split by space
+    parseNums [slots, nums] = (intercalate "?" $ replicate multiplier slots, concat $ replicate multiplier $ map parseInt $ splitOn "," nums) -- convert right side to list of ints
+>>>>>>> Stashed changes
