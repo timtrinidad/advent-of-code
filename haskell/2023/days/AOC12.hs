@@ -2,6 +2,7 @@ module AOC12 (day12) where
 import Data.List.Split (splitOn, wordsBy)
 import Common (parseInt)
 import Data.List (group, intercalate)
+import Data.MemoTrie (memo2)
 import Debug.Trace
 
 day12 :: (String -> String, String -> String)
@@ -13,48 +14,45 @@ part1 input = show $ sum $ map numArrangements $ parseInput 1 input
 
 
 part2 :: String -> String
-part2 input = show $ sum $ zipWith handleRecord [1..] $ parseInput 4 input
-  where
-    handleRecord :: Int -> (String, [Int]) -> Int
-    handleRecord idx record = traceShow idx $ numArrangements record
-
+part2 input = show $ sum $ map numArrangements $ parseInput 5 input
 
 -- For a given diagram and list of working groups, count the total number of valid arrangements
-numArrangements (diagram, workingGroups) =
-      length
-      -- $ traceShow filteredOut
-      $ filter (==workingGroups) -- filter to ones that match the nums for this record
-      $ map convertToNums allPossibilities -- convert to a number record
+numArrangements :: (String, [Int]) -> Int
+numArrangements (diagram, workingGroups) = allPossibilities
   where
-    allPossibilities = expandPossibilities diagram workingGroups -- generatate all possible combinations
-    convertToNums = map length . wordsBy (=='.') -- remove periods and count each group of '#'
+    allPossibilities = expandPossibilitiesMemo diagram workingGroups -- generatate all possible combinations
+
+-- Memoized version of expandPossibilities
+expandPossibilitiesMemo :: String -> [Int] -> Int
+expandPossibilitiesMemo = memo2 expandPossibilities
 
 -- Recursively generate possibilties, converting each ? into two possible strings (# or .)
-expandPossibilities :: String -> [Int] -> [String]
-expandPossibilities [] _ = [""] -- base case - no more characters to process
-expandPossibilities (currSpring:restSprings) workingGroups = do notWorking ++ working
+expandPossibilities :: String -> [Int] -> Int
+expandPossibilities [] [] = 1 -- base case - no more characters to process and no more working groups
+expandPossibilities [] _ = 0 -- no more characters to process but still have some working groups left - invalid
+expandPossibilities (currSpring:restSprings) workingGroups = 
+  notWorking + working
   where
     -- Figure out what options there are to set this next character to '.'
-    notWorking = if currSpring == '#' then [] else map ('.':) $ expandPossibilities restSprings workingGroups
+    notWorking = if currSpring `elem` "?." then expandPossibilitiesMemo restSprings workingGroups else 0
     -- Figure out what options there are to set the next few characters to '#' based on the next working group number
-    working = if currSpring == '.' then [] else expandWorkingPossibilities (currSpring:restSprings) workingGroups
+    working = if currSpring `elem` "?#" then expandWorkingPossibilities (currSpring:restSprings) workingGroups else 0
 
-expandWorkingPossibilities _ [] = []
+expandWorkingPossibilities :: String -> [Int] -> Int
+expandWorkingPossibilities _ [] = 0
 expandWorkingPossibilities diagram (currWorkingGroup:restWorkingGroups)
-  -- Is valid - prepend the proposed string to each of the generated downsteam options
-  | workingGroupIsValid workingGroupString diagram = map (workingGroupString ++) substring
+  -- Is valid - Recurse, skipping the next n chars based on what we added just now
+  | workingGroupIsValid workingGroupString diagram = expandPossibilitiesMemo (drop (length workingGroupString) diagram) restWorkingGroups
   -- Proposed working group is not valid - short circuit recursion
-  | otherwise = []
+  | otherwise = 0
   where
-    -- Recurse, skipping the next n chars based on what we added just now
-    substring = expandPossibilities (drop (length workingGroupString) diagram) restWorkingGroups
     workingGroupString = replicate currWorkingGroup '#'
       ++ (['.' | length diagram > currWorkingGroup]) -- If we're not at the end, append a spacer ('.')
 
 -- Determine if the proposed string for this working group is valid based
 -- on the given diagram
 workingGroupIsValid :: String -> String -> Bool
-workingGroupIsValid workingGroupString diagram =
+workingGroupIsValid workingGroupString diagram = 
   (length workingGroupString <= length diagram) -- diagram is long enough
   && and (zipWith (\a b -> b `elem` [a, '?']) workingGroupString diagram) -- diagram matches each charachter or has '?'
 

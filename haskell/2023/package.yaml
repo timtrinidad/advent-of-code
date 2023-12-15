@@ -27,6 +27,7 @@ dependencies:
 - containers
 - timeit
 - MissingH
+- MemoTrie
 - regex-tdfa
 - ordered-containers
 - range
