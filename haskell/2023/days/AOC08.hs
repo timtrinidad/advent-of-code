@@ -7,15 +7,18 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 import Debug.Trace
 
+day08 :: (String -> String, String -> String)
 day08 = (part1, part2)
 
 -- Traverse the map recursively starting with "AAA"
+part1 :: String -> String
 part1 input = show $ traverseMap mapping dir "AAA"
   where (dir, mapping) = parseInput input
 
 -- Find the least common multiple of the number of steps it takes
 -- to get from each staring point (anything ending with 'A') to
 -- their corresponding ending point (ending with 'Z')
+part2 :: String -> String
 part2 input = show
     $ foldl1 lcm
     $ map (traverseMap mapping dir) -- each starting point's # steps to '..Z'
@@ -23,15 +26,18 @@ part2 input = show
   where (dir, mapping) = parseInput input
 
 -- Traverse the map iterating through each direction until we get to something that ends with 'Z'
+traverseMap :: Map String (String, String) -> String -> String -> Int
 traverseMap mapping dirs currLoc = length $ takeWhile (not . isSuffixOf "Z") $ scanl getNextLoc currLoc dirs
   -- pick second direction if 'R' otherwise first direction
-  where getNextLoc currLoc dir = (if dir == 'R' then snd else fst) $ mapping Map.! currLoc
+  where getNextLoc currLoc' dir = (if dir == 'R' then snd else fst) $ mapping Map.! currLoc'
 
 -- Parse the dir and mapping separately
+parseInput :: String -> (String, Map String (String, String))
 parseInput input = (cycle dir, parseMapping mapping)
   where [dir, mapping] = splitOn "\n\n" input
 
 -- Convert each line into a map entry (first is the key, second and third is the value as a tuple
+parseMapping :: String -> Map String (String, String)
 parseMapping input = Map.fromList $ processLine <$> splitOn "\n" input
   where
      -- Split on any symbol and filter out empty strings

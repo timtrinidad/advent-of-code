@@ -26,6 +26,7 @@ import AOC22 (day22)
 import AOC23 (day23)
 import AOC24 (day24)
 
+getDay :: String -> (String -> String, String -> String)
 getDay "01" = day01
 getDay "02" = day02
 getDay "03" = day03

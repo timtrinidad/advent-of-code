@@ -5,11 +5,13 @@ import Data.Map (Map, (!))
 import qualified Data.Map as Map
 import Debug.Trace
 
+day10 :: (String -> String, String -> String)
 day10 = (part1, part2)
 
 data Pipe = Pipe { label :: Char, connections :: [(Int, Int)] } deriving (Show)
 
 -- Traverse the map to get the full loop distance - the furthest point will be half the loop distance
+part1 :: String -> String
 part1 input = show $ loopDistance `div` 2
   where
     -- traverse pipes to get the full loop distance
@@ -19,6 +21,7 @@ part1 input = show $ loopDistance `div` 2
     (pipesMap, startPoint, _) = parseInput input
 
 -- Count the number of inside points
+part2 :: String -> String
 part2 input = show $ countInsidePoints path pipesMap allPoints currDy isInside insideCounter
   where
     allPoints = [(x, y) | y <- [0..mapHeight-1], x <- [0..mapWidth-1]]
@@ -32,6 +35,7 @@ part2 input = show $ countInsidePoints path pipesMap allPoints currDy isInside i
     (pipesMap, startPoint, (mapWidth, mapHeight)) = parseInput input
 
 -- Recursively look through every point, determining at each point if we cross into the inside or outside of the path
+countInsidePoints :: [(Int, Int)] -> Map (Int, Int) Pipe -> [(Int, Int)] -> Int -> Bool -> Int -> Int
 countInsidePoints _ _ [] _ _ insideCounter = insideCounter -- base case - no more points to explore
 countInsidePoints path pipesMap (x:xs) currDy isInside insideCounter
   -- If this point is not part of the path, increment counter if we're inside the path
@@ -48,31 +52,33 @@ countInsidePoints path pipesMap (x:xs) currDy isInside insideCounter
     isInside' = if connectionsSumDy == -1 * currDy || label currPipe == '|' then not isInside else isInside
     -- For the two points connecting to this pipe, determine if it's coming from up or down.
     -- If it's coming from up to left/right, it will be -1. From down, 1.
-    connectionsSumDy = sum $ map snd $ dirsFromPipe $ label currPipe 
+    connectionsSumDy = sum $ map snd $ dirsFromPipe $ label currPipe
     currPipe = pipesMap ! x -- the pipe at the current point. This won't ever error since we know at this point we're part of the path
 
 
 
 
 -- Recursively travese the pipesMap until we get to a pipe labelled 'S'
+traversePipes :: Map (Int, Int) Pipe -> [(Int, Int)] -> (Int, Int) -> (Int, Int) -> (Int, Int) -> [(Int, Int)]
 traversePipes pipesMap path startPoint prevPoint currPoint
   -- base case - return current distance
-  | currPoint == startPoint = (currPoint:path)
+  | currPoint == startPoint = currPoint:path
   -- recurse - increment distance, shifting currPoint to prevPoint and finding next as currPoint
-  | otherwise = traversePipes pipesMap (currPoint:path) startPoint currPoint $ findNext pipesMap prevPoint currPoint 
-  where 
+  | otherwise = traversePipes pipesMap (currPoint:path) startPoint currPoint $ findNext pipesMap prevPoint currPoint
+  where
     -- Find the next coordinate by looking at the two connections for a current pipe and eliminating the coordinate
     -- that was passed in as prevPoint
-    findNext pipesMap prevPoint (currX, currY) = 
-      fromJust $ find (/= prevPoint) -- Find the coordinate that's not the prevPoint
+    findNext pipesMap' prevPoint' (currX, currY) =
+      fromJust $ find (/= prevPoint') -- Find the coordinate that's not the prevPoint
       $ connections -- The coordinates of its neighbors is in the 'connections' key of the Pipe object
-      $ pipesMap ! (currX, currY) -- Get the pipe at the current location
+      $ pipesMap' ! (currX, currY) -- Get the pipe at the current location
 
-  
+
 
 -- Convert the input into a tuple containing:
 --   - A Map with key (x,y) and value Pipe {label, connections}
 --   - An (x,y) coordinate of the start point
+parseInput :: [Char] -> (Map (Int, Int) Pipe, (Int, Int), (Int, Int))
 parseInput input = (pipesMap', startPoint, mapDimensions)
   where
     -- Update the pipesMap to put in the connections for the starting point
@@ -88,10 +94,11 @@ parseInput input = (pipesMap', startPoint, mapDimensions)
 
 -- Convert a single line index and char tuple to an (x,y) coordinate and Pipe object
 -- which contains the original character and x,y coordinates of its 2 connections
+toPipe :: Int -> (Int, Char) -> ((Int, Int), Pipe)
 toPipe rowLength (idx, char) = ((x, y), Pipe {
   label = char,
   -- A char will give its dx,dy which will be converted to absolute x,y
-  connections = map getConnection $ dirsFromPipe char 
+  connections = map getConnection $ dirsFromPipe char
 })
   where
     getConnection (dx, dy) = (x + dx, y + dy)
@@ -100,6 +107,7 @@ toPipe rowLength (idx, char) = ((x, y), Pipe {
     y = idx `div` rowLength
 
 -- Convert a pipe to its dx,dy neighbor positions
+dirsFromPipe :: Char -> [(Int, Int)]
 dirsFromPipe char = case char of
   '|' -> [(0, -1), (0, 1)] -- top/down
   '-' -> [(-1, 0), (1, 0)] -- left/right
@@ -112,6 +120,7 @@ dirsFromPipe char = case char of
 
 -- Find the connections for a given location by traversing all possible neighbors
 -- and filtering for which ones have the current (x,y) coordinates in its connections
+findConnections :: Map (Int, Int) Pipe -> (Int, Int) -> [(Int, Int)]
 findConnections pipesMap (x, y) = filter doesConnect neighbors
   where
     -- Whether or not the current location is in the list of connections for the pipe at a given point

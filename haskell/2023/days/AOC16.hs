@@ -87,7 +87,7 @@ parseInput input = (mapping, (width, height))
   where
     height = length allLines
     width = length $ head allLines
-    mapping = Map.fromList $ concat $ zipWith parseLine [0..] $ allLines
+    mapping = Map.fromList $ concat $ zipWith parseLine [0..] allLines
     allLines = lines input
     parseLine y = zipWith (parseChar y) [0..]
     parseChar y x char = (Pt x y, char)

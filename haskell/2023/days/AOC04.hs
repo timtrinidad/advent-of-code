@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Use tuple-section" #-}
 module AOC04 (day04) where
 
 import Data.List.Split (splitOneOf, chunksOf, splitOn)
@@ -6,14 +8,17 @@ import Common (parseInt)
 import Data.Map (Map)
 import qualified Data.Map as Map
 
+day04 :: (String -> String, String -> String)
 day04 = (part1, part2)
 
 -- For each card, calculate the number of points it's worth and sum up the points
+part1 :: String -> String
 part1 input = show $ sum $ map calculatePoints parsed
   where parsed = parseInput input
         calculatePoints = numMatchesToPoints . getNumMatches
 
 -- Recursively count cards and sum the total values
+part2 :: String -> String
 part2 input = show $ sum $  Map.elems $ countCards numMatches numCardsMap
   where numMatches = zip [1..] $ map getNumMatches parsed -- Number of matches for each card
         -- Initialize a map with key cardNum and val 1 (starting with 1 of every card)
@@ -21,10 +26,8 @@ part2 input = show $ sum $  Map.elems $ countCards numMatches numCardsMap
         parsed = parseInput input
 
 
-
-
-
 -- Process each card and update the card counter
+countCards :: [(Int, Int)] -> Map Int Int -> Map Int Int
 countCards [] numCardsMap = numCardsMap -- base case
 countCards ((cardNum, numMatches):remainingCards) numCardsMap =
   -- recurse with remaining cards
@@ -36,14 +39,17 @@ countCards ((cardNum, numMatches):remainingCards) numCardsMap =
 
 
 -- Convert to points based on number of matches
+numMatchesToPoints :: Int -> Int
 numMatchesToPoints x
   | x == 0 = 0
   | otherwise = 2 ^ (x-1)
 
 -- For each line map to # of intersections between left and right
+getNumMatches :: [[Int]] -> Int
 getNumMatches [left, right] = length $ intersect left right
 
 -- Split each line into two lists of numbers
+parseInput :: String -> [[[Int]]]
 parseInput = map processLine . lines
   where processLine = map extractNumbers
           . splitOn " |"

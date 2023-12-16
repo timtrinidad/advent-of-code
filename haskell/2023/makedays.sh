@@ -18,6 +18,7 @@ part1 = show . parseInput
 part2 :: String -> String
 part2 = show . parseInput
 
+parseInput :: String -> [String]
 parseInput = lines
 
 EOF

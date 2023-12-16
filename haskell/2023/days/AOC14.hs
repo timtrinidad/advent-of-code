@@ -13,6 +13,7 @@ data Direction = North | West | South | East
 type Dimensions = (Int, Int)
 type Mapping = Map Dimensions Char
 
+day14 :: (String -> String, String -> String)
 day14 = (part1, part2)
 
 -- Get the sum of all row numbers for each rolling rock
@@ -87,7 +88,7 @@ parseInput input = (mapping, (width, height))
     width = length $ head allLines
     height = length allLines
     -- create Map and filter out empty spaces (periods)
-    mapping = Map.filter (/= '.') $ Map.fromList $ concat $ zipWith processLine [0..] $ allLines
+    mapping = Map.filter (/= '.') $ Map.fromList $ concat $ zipWith processLine [0..] allLines
     allLines = lines input
     -- Parse into a grid
     processLine y = zipWith (processChar y) [0..]
