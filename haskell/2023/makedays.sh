@@ -13,10 +13,12 @@ day$i :: (String -> String, String -> String)
 day$i = (part1, part2)
 
 part1 :: String -> String
-part1 input = "part1 not defined for day $i"
+part1 = show . parseInput 
 
 part2 :: String -> String
-part2 input = "part2 not defined for day $i"
+part2 = show . parseInput
+
+parseInput = lines
 
 EOF
 done
