@@ -14,21 +14,36 @@ data Dir = North | South | East | West deriving (Show, Eq, Ord)
 day16 :: (String -> String, String -> String)
 day16 = (part1, part2)
 
--- Find unique traversed points (ignoring direction) and get length
 part1 :: String -> String
-part1 input = show $ length $ nub $ map fst $ Set.toList $ traverseGrid mapping Set.empty [(Pt 0 0, East)]
+part1 input = show $ numTraversed mapping (Pt 0 0, East)
   where (mapping, _) = parseInput input
 
+-- Find all traversed points for each starting point and find max
 part2 :: String -> String
-part2 input = show $ parseInput input
+part2 input = show $ maximum $ map (numTraversed mapping . traceShowId) startingPoints
+  where
+    -- Calculate all possible staring points
+    startingPoints = 
+      [(Pt x 0, South) | x <- [0..width-1]] ++
+      [(Pt x (height-1), North) | x <- [0..width-1]] ++
+      [(Pt 0 y, East) | y <- [0..height-1]] ++
+      [(Pt (width-1) y, West) | y <- [0..height-1]]
+    (mapping, (width, height)) = parseInput input
+
+-- Find unique traversed points (ignoring direction) and get length
+numTraversed :: Mapping -> (Point, Dir) -> Int
+numTraversed mapping (startPoint, startDir) =
+  length $ nub -- get uniques now that we're not considering direction
+  $ map fst -- ignore direction
+  $ Set.toList $ traverseGrid mapping Set.empty [(startPoint, startDir)] -- traverse
 
 -- BFS to traverse the grid, splitting when necessary. Returns a unique set of traversed points.
 traverseGrid :: Mapping -> Set (Point, Dir) -> [(Point, Dir)] -> Set (Point, Dir)
 traverseGrid _ seen [] = seen
 traverseGrid mapping seen ((point, dir):toExplore)
   | Set.member (point, dir) seen = skip -- already seen - move onto next point
-  | Map.member point mapping = traverseGrid mapping seen' toExplore' -- Add new points to explore and move on
-  | otherwise = skip -- point is not within map, move onto next point
+  | not $ Map.member point mapping = skip -- point is not within map, move onto next point
+  | otherwise = traverseGrid mapping seen' toExplore' -- Add new points to explore and move on
   where
     skip = traverseGrid mapping seen toExplore -- ignore current point and go onto the next one
     -- Append all possible next points/directions to the list to explore
@@ -36,7 +51,7 @@ traverseGrid mapping seen ((point, dir):toExplore)
     -- For a new direction from the current point, calculate the next point 
     findNextPoint dir' = (transformPoint point $ dirDelta dir', dir')
     -- Add the current point/direction to the set (since the same point can be hit from multiple dirs)
-    seen' = Set.insert (point, dir) seen 
+    seen' = Set.insert (point, dir) seen
     charAtPoint = mapping Map.! point -- The character at a given xy point
 
 -- Convert a direction to an x y delta
