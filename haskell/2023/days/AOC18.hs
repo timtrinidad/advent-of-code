@@ -1,77 +1,67 @@
 module AOC18 (day18) where
 
-import Data.Map (Map)
-import qualified Data.Map as Map
-import Data.Set (Set)
-import qualified Data.Set as Set
 import Data.List.Split (wordsBy)
-import Data.List ( nub, foldl' )
+import Data.List (scanl')
 import Common (parseInt)
-import Debug.Trace (traceShowId, traceShow)
+import Numeric (readHex)
 
-type Color = String
-type Mapping = Map Point Color
-data Dir = North | East | South | West | None deriving (Show, Eq, Ord)
+data Dir = DirUp | DirDown | DirLeft | DirRight deriving (Show, Eq, Ord)
 data Point = Pt Int Int deriving (Show, Eq, Ord)
-data Instruction = Inst Dir Int Color deriving (Show)
+data Instruction = Inst Dir Int deriving (Show)
 
 day18 :: (String -> String, String -> String)
 day18 = (part1, part2)
 
 part1 :: String -> String
-part1 input = show $ Map.size $ floodFill mapping [Pt 1 1]
-    where
-        mapping = snd $ generateBorder $ parseInput input
+part1 input = show $ totalArea $ parseInput1 input
 
 part2 :: String -> String
-part2 = show . parseInput
+part2 input = show $ totalArea $ parseInput2 input
 
-render :: Mapping -> String
-render mapping = unlines $ map renderRow [yMin..yMax]
+-- Use Pick's theorem to calculate the total area including the perimeter
+totalArea :: [Instruction] -> Int
+totalArea instructions = shoelaceArea vertices + perimeter instructions `div` 2 + 1
     where
-        renderRow y = traceShowId $ map (renderCol y) [xMin..xMax]
-        renderCol 0 0 = '+'
-        renderCol y x = if Map.member (Pt x y) mapping then '#' else '.'
-        (xMin, xMax) = (minimum xRange, maximum xRange)
-        (yMin, yMax) = (minimum yRange, maximum yRange)
-        xRange = map (\(Pt x _) -> x) $ Map.keys mapping
-        yRange = map (\(Pt _ y) -> y) $ Map.keys mapping
+        vertices = init $ scanl' processInst (Pt 0 0) instructions
+        processInst currPt (Inst dir dist) = transformPoint currPt dir dist
 
-generateBorder :: [Instruction] -> (Point, Mapping)
-generateBorder = foldl' processInstruction (Pt 0 0, Map.empty)
+-- Calculate the perimeter of the polygon - sum of all dists
+perimeter :: [Instruction] -> Int
+perimeter = sum . map (\(Inst _ dist) -> dist)
+
+-- Calculate the shoelace area of the polygon (doesn't include the perimeter)
+shoelaceArea :: [Point] -> Int
+shoelaceArea vertices = sums `div` 2
     where
-        processInstruction acc (Inst dir dist color) = foldl' (dig dir color) acc [1..dist]
+        sums = sum $ zipWith processVtx vertices $ tail vertices
+        processVtx (Pt x y) (Pt x' y') = x * y' - y * x'
 
+-- Given a point, direction, and distance, calculate the new point
+transformPoint :: Point -> Dir -> Int -> Point
+transformPoint (Pt x y) DirUp dist = Pt x (y-dist)
+transformPoint (Pt x y) DirDown dist = Pt x (y+dist)
+transformPoint (Pt x y) DirLeft dist = Pt (x-dist) y
+transformPoint (Pt x y) DirRight dist = Pt (x+dist) y
 
-dig :: Dir -> Color -> (Point, Mapping) -> Int -> (Point, Mapping)
-dig dir color (currPt, mapping) _ = (nextPt, Map.insert nextPt color mapping)
+-- Parse the first two columns into a set of instructions
+parseInput1 :: String -> [Instruction]
+parseInput1 = map (processLine . wordsBy (`elem` " (#)")) . lines
     where
-        nextPt = transformPoint currPt (dirDelta dir)
-
-floodFill :: Mapping -> [Point] -> Mapping
-floodFill mapping [] = mapping
-floodFill mapping (currPt:nextPts) = floodFill mapping' (nub $ nextPts ++ addlPts)
-    where
-        mapping' = Map.insert currPt "000000" mapping
-        addlPts = filter (\x -> not $ Map.member x mapping) $ map (transformPoint currPt . dirDelta) [North, South, East, West]
-
-dirDelta :: Dir -> (Int, Int)
-dirDelta North = (0, -1)
-dirDelta East = (1, 0)
-dirDelta South = (0, 1)
-dirDelta West = (-1, 0)
-
--- Given a point and a delta, calculate the new point
-transformPoint :: Point -> (Int, Int) -> Point
-transformPoint (Pt x y) (dx, dy) = Pt (x+dx) (y+dy)
-
-parseInput :: String -> [Instruction]
-parseInput = map (processLine . wordsBy (`elem` " (#)")) . lines
-    where
-        processLine [letter, dist, color] = Inst (dir letter) (parseInt dist) color
+        processLine [letter, dist, _] = Inst (dir letter) (parseInt dist)
         dir x = case x of
-            "U" -> North
-            "D" -> South
-            "L" -> West
-            "R" -> East
+            "U" -> DirUp
+            "D" -> DirDown
+            "L" -> DirLeft
+            "R" -> DirRight
 
+-- Parse the hexidecimal "Color" into a set of instructions
+parseInput2 :: String -> [Instruction]
+parseInput2 = map (processLine . wordsBy (`elem` " (#)")) . lines
+    where
+        processLine [_, _, hex] = Inst(dir $ last hex) (calcDist $ take 5 hex)
+        calcDist hexDist = fst $ head $ readHex hexDist
+        dir x = case x of
+            '3' -> DirUp
+            '1' -> DirDown
+            '2' -> DirLeft
+            '0' -> DirRight
