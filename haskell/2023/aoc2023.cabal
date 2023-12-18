@@ -64,6 +64,7 @@ library
     , ordered-containers
     , range
     , regex-tdfa
+    , search-algorithms
     , split
     , text
     , timeit
@@ -87,6 +88,7 @@ executable haskell-exe
     , ordered-containers
     , range
     , regex-tdfa
+    , search-algorithms
     , split
     , text
     , timeit
