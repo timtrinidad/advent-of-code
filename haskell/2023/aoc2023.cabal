@@ -62,6 +62,7 @@ library
     , containers
     , mr-env
     , ordered-containers
+    , pretty-show
     , range
     , regex-tdfa
     , search-algorithms
@@ -86,6 +87,7 @@ executable haskell-exe
     , containers
     , mr-env
     , ordered-containers
+    , pretty-show
     , range
     , regex-tdfa
     , search-algorithms

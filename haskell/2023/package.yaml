@@ -32,6 +32,7 @@ dependencies:
 - ordered-containers
 - range
 - search-algorithms
+- pretty-show
 
 ghc-options:
 - -Wall
