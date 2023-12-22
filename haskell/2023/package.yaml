@@ -30,9 +30,11 @@ dependencies:
 - MemoTrie
 - regex-tdfa
 - ordered-containers
+- unordered-containers
 - range
 - search-algorithms
 - pretty-show
+- hashable
 
 ghc-options:
 - -Wall
