@@ -70,6 +70,7 @@ library
     , split
     , text
     , timeit
+    , topograph
     , turtle
     , unordered-containers
   default-language: Haskell2010
@@ -97,6 +98,7 @@ executable haskell-exe
     , split
     , text
     , timeit
+    , topograph
     , turtle
     , unordered-containers
   default-language: Haskell2010

@@ -35,6 +35,7 @@ dependencies:
 - search-algorithms
 - pretty-show
 - hashable
+- topograph
 
 ghc-options:
 - -Wall
