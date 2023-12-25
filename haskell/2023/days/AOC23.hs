@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
 module AOC23 (day23) where
 
 import Data.Map (Map)
