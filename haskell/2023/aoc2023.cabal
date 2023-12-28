@@ -47,6 +47,7 @@ library
       AOC22
       AOC23
       AOC24
+      AOC25
   other-modules:
       Paths_aoc2023
   autogen-modules:
@@ -58,20 +59,18 @@ library
   build-depends:
       MemoTrie
     , MissingH
-    , base
+    , base >=4.18 && <5
     , containers
-    , hashable
     , mr-env
     , ordered-containers
     , pretty-show
+    , random
     , range
     , regex-tdfa
     , search-algorithms
     , split
     , text
     , timeit
-    , topograph
-    , turtle
     , unordered-containers
   default-language: Haskell2010
 
@@ -86,19 +85,17 @@ executable haskell-exe
       MemoTrie
     , MissingH
     , aoc2023
-    , base
+    , base >=4.18 && <5
     , containers
-    , hashable
     , mr-env
     , ordered-containers
     , pretty-show
+    , random
     , range
     , regex-tdfa
     , search-algorithms
     , split
     , text
     , timeit
-    , topograph
-    , turtle
     , unordered-containers
   default-language: Haskell2010

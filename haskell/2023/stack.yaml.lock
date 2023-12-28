@@ -13,8 +13,7 @@ packages:
     hackage: mr-env-0.1.0.5@sha256:9e5d001fc4d61db731d87cab9be1b415f7f76a5ed9b22cb15ab228a0efc9d5a2,1053
 snapshots:
 - completed:
-    sha256: abcc4a65c15c7c2313f1a87f01bfd4d910516e1930b99653eef1d2d006515916
-    size: 640074
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/21/24.yaml
-  original:
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/21/24.yaml
+    sha256: 53a2800f7fe0c4628af0e7d5e985707dd3af9863ac3983a43c835dbaa8ed5f35
+    size: 714094
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/22/3.yaml
+  original: lts-22.3
