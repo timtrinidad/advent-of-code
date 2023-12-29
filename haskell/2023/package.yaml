@@ -34,7 +34,6 @@ dependencies:
 - pretty-show
 - random
 
-
 ghc-options:
 - -Wall
 - -Wcompat

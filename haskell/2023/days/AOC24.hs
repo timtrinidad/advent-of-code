@@ -4,6 +4,8 @@ import Common (parseInt)
 import Debug.Trace
 import Text.Show.Pretty (ppShow)
 import Data.Maybe (mapMaybe)
+import Data.Either (fromRight)
+import Data.List (intercalate)
 
 data Point = Pt Int Int Int deriving (Show, Eq, Ord)
 data Velocity = Vel Int Int Int deriving (Show, Eq, Ord)
@@ -17,12 +19,12 @@ part1 :: String -> String
 part1 input = ppShow $ length $ filter isValid $ mapMaybe findPathIntersectionsWithTime hailstonePairs
     where
         -- This pairing is valid only if both times are in the future and the point is within range
-        isValid (x, y, time1, time2) = 
-            time1 > 0 && 
+        isValid (x, y, time1, time2) =
+            time1 > 0 &&
             time2 > 0 &&
-            x >= rangeLow && 
-            x <= rangeHigh && 
-            y >= rangeLow && 
+            x >= rangeLow &&
+            x <= rangeHigh &&
+            y >= rangeLow &&
             y <= rangeHigh
         -- Defined by challenge
         rangeLow = if length hailstones < 10 then 7 else 200000000000000
@@ -31,8 +33,39 @@ part1 input = ppShow $ length $ filter isValid $ mapMaybe findPathIntersectionsW
         hailstonePairs = [(i, j) | i <- hailstones, j <- hailstones, i < j]
         hailstones = parseInput input
 
+-- Take the first three rocks to generate 9 equations for 9 variables:
+--   - the x y z starting position of the magic rock
+--   - the a b c velocity of the magic rock
+--   - the h i j times of impact with the first three hailstones
+-- mfsolve wasn't properly solving this equation, so this outputs a python script to solve the system.
 part2 :: String -> String
-part2 = show . parseInput
+part2 input = intercalate "\n" cmd
+    where
+        cmd = [
+                "",
+                "python3 -c '",
+                "from sympy import *",
+                "a, b, c, h, i, j, x, y, z = symbols(\"a b c h i j x y z\")",
+                "res = nonlinsolve([",
+                "  x+a*h - " ++ show px1 ++ "-" ++ show vx1 ++ "*h,",
+                "  y+b*h - " ++ show py1 ++ "-" ++ show vy1 ++ "*h,",
+                "  z+c*h - " ++ show pz1 ++ "-" ++ show vz1 ++ "*h,",
+                "  x+a*i - " ++ show px2 ++ "-" ++ show vx2 ++ "*i,",
+                "  y+b*i - " ++ show py2 ++ "-" ++ show vy2 ++ "*i,",
+                "  z+c*i - " ++ show pz2 ++ "-" ++ show vz2 ++ "*i,",
+                "  x+a*j - " ++ show px3 ++ "-" ++ show vx3 ++ "*j,",
+                "  y+b*j - " ++ show py3 ++ "-" ++ show vy3 ++ "*j,",
+                "  z+c*j - " ++ show pz3 ++ "-" ++ show vz3 ++ "*j",
+                "], (a, b, c, h, i, j, x, y, z)).args[0]",
+                "print(res[6] + res[7] + res[8])",
+                "';"
+            ]
+
+        [
+            (Pt px1 py1 pz1, Vel vx1 vy1 vz1),
+            (Pt px2 py2 pz2, Vel vx2 vy2 vz2),
+            (Pt px3 py3 pz3, Vel vx3 vy3 vz3)
+            ] = take 3 $ parseInput input
 
 -- Given two input lines (two stones), determine at what point their paths
 -- will cross and at what time for each stone. Returns Nothing if the two stones
