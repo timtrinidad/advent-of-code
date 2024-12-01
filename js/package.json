@@ -1,0 +1,9 @@
+{
+  "name": "advent-of-code",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "aoc-copilot": "^1.6.0"
+  }
+}
