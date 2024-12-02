@@ -9,7 +9,8 @@
             "args": [
                 "2024/aoc${input:dateString}.js"
             ],
-            "problemMatcher": []
+            "problemMatcher": [],
+            "runOptions": { "reevaluateOnRerun": false}
         }
     ],
     "inputs": [
