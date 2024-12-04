@@ -38,8 +38,24 @@ function part1([width, height, map]) {
     return count;
 }
 
-function part2(parsed) {
-    return 0;
+function part2([width, height, map]) {
+    let count = 0;
+    for(let x = 0; x < width; x++) {
+        for(let y = 0; y < height; y++) {
+            const currChar = getMapValue(map, x, y);
+            if(currChar === 'A') {
+                const corners = [[-1, -1], [1, -1], [-1, 1], [1, 1]]
+                    .map(([dx, dy]) => getMapValue(map, x + dx, y + dy))
+                    .join('')
+                // These cases are valid - MSSM or SMMS have both 
+                // S or M opposite each other which is invalid
+                if(['MMSS', 'SSMM', 'SMSM', 'MSMS'].includes(corners)) {
+                    count++;
+                }
+            }
+        }
+    }
+    return count;
 }
 
 /**
