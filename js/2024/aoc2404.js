@@ -25,12 +25,15 @@ function parse(inputs) {
 function part1([width, height, map]) {
     let count = 0;
 
-    // For each point, go in a specific direction traversing recursively
+    // For each point, go in a specific direction and get the four characters
     const dirs = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]
     for(let x = 0; x < width; x++) {
         for (let y = 0; y < height; y++) {
             dirs.forEach(([dx, dy]) => {
-                count += wordSearch([x, y], [dx, dy], [width, height], map, getMapValue(map, x, y)) || 0;
+                const search = [0, 1, 2, 3].map(m => getMapValue(map, x + dx * m, y + dy * m)).join('');
+                if(search === 'XMAS') {
+                    count++;
+                }
             });
         }
     }
@@ -56,44 +59,6 @@ function part2([width, height, map]) {
         }
     }
     return count;
-}
-
-/**
- * Look for 'XMAS' given a point and a direction
- */
-function wordSearch([currX, currY], [dx, dy], [width, height], map, str) {
-    // Base case
-    if(str == 'XMAS') {
-        return 1;
-    }
-
-    const [nextX, nextY] = [currX + dx, currY + dy];
-    // Out of bounds
-    if(nextX < 0 || nextY < 0 || nextX >= width || nextY >= height) {
-        return 0;
-    }
-
-    let nextChar;
-    switch(str) {
-        case 'X':
-            nextChar = 'M';
-            break;
-        case 'XM':
-            nextChar = 'A';
-            break;
-        case 'XMA':
-            nextChar = 'S';
-            break;
-        default:
-            break;
-    }
-    // Next character is not expected
-    if(!nextChar || getMapValue(map, nextX, nextY) !== nextChar) {
-        return 0;
-    }
-
-    // Recurse
-    return wordSearch([nextX, nextY], [dx, dy], [width, height], map, str + nextChar);
 }
 
 function getMapValue(map, x, y) {
