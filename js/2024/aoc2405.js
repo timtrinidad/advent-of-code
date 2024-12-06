@@ -55,21 +55,31 @@ function isLineValid(line, rules) {
  * Reorder the numbers on a line based on the given rules
  */
 function fixLine(remainingNums, existingLine, rules) {
-    if(!remainingNums.length) {
-        return existingLine;
-    }
+    // if(!remainingNums.length) {
+    //     return existingLine;
+    // }
 
-    // Look for which number doesn't appear in the rules on the right for any of the remaining numbers on the left
-    // That's our next number
-    const firstNum = remainingNums.find(x => {
-        return remainingNums.every(y => {
-            return x === y || !rules.has(`${y}|${x}`);
-        });
+    // // Look for which number doesn't appear in the rules on the right for any of the remaining numbers on the left
+    // // That's our next number
+    // const firstNum = remainingNums.find(x => {
+    //     return remainingNums.every(y => {
+    //         return x === y || !rules.has(`${y}|${x}`);
+    //     });
+    // });
+
+    // existingLine.push(firstNum);
+    // // Recurse to find the remaining numbers
+    // return fixLine(remainingNums.filter(x => x !== firstNum), existingLine, rules);
+    remainingNums.sort((a, b) => {
+        if(rules.has(`${a}|${b}`)) {
+            return -1;
+        }
+        if(rules.has(`${b}|${a}`)) {
+            return 1;
+        }
+        return 0;
     });
-
-    existingLine.push(firstNum);
-    // Recurse to find the remaining numbers
-    return fixLine(remainingNums.filter(x => x !== firstNum), existingLine, rules);
+    console.log(remainingNumes)
 }
 
 run(__filename, solve, {skipTests: false});
