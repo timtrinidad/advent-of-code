@@ -37,24 +37,25 @@ function part1(parsed) {
 function part2(parsed) {
     const { map, width, height } = parsed;
     
+    const initiallyVisitedPoints = traverseMap(parsed, false);
+    
     let num = 0;
-    // For every point, convert it to an obstacle and see if we ended up in a loop
-    for (let x = 0; x < width; x++) {
-        for (let y = 0; y < height; y++) {
-            const currPoint = map.get(mapKey(x, y));
-            if(currPoint === '^' || currPoint === '#') {
-                continue;
-            }
-
-            map.set(mapKey(x, y), '#');
-            try {
-                traverseMap(parsed, true);
-            } catch(e) {
-                num++;
-            }
-            map.set(mapKey(x, y), '.');
+    Array.from(initiallyVisitedPoints.keys()).forEach(ptStr => {
+        const [x, y] = ptStr.split(',').map(x => parseInt(x, 10));
+        const currPoint = map.get(mapKey(x, y));
+        if(currPoint === '^' || currPoint === '#') {
+            return;
         }
-    }
+
+        map.set(mapKey(x, y), '#');
+        try {
+            traverseMap(parsed, true);
+        } catch(e) {
+            num++;
+        }
+        map.set(mapKey(x, y), '.');
+    });
+
 
     return num;
 }
