@@ -14,13 +14,13 @@ function parse(inputs) {
     });
 }
 
-function part1(parsed) {
+function part1(parsed, possibleOps = ['+', '*']) {
     let sum = 0;
 
     for (const line of parsed) {
         // If any given line can be made into an equation,
         // add its total to the sum
-        if(isValid(line)) {
+        if(isValid(line, possibleOps)) {
             sum += line.res;
         }
     }
@@ -28,22 +28,31 @@ function part1(parsed) {
 }
 
 function part2(parsed) {
-    return 0;
+    return part1(parsed, ['+', '*', '|'])
 }
 
+
 /**
- * Recursively combine each value with one of the various operators
- * and return the full set of permutations
+ * Determine, if based on the fully expanded set of possible equations,
+ * if the result can be accomplished from the given values.
  */
-function isValid({res, vals}) {
-    // No neex to expand the first value into all possible options - it will
+function isValid({res, vals}, possibleOps) {
+    // No need to expand the first value into all possible options - it will
     // always just be returned (specifically be added to the initial value of 0)
-    const valsWithOps = [{op: '+', val: vals[0]}];
+    const equation = [{op: '+', val: vals[0]}];
 
     // Get the full set of possible equations - permutations of equations combined with values
-    const equations = expandOps(vals.slice(1), valsWithOps);
+    const equations = expandOps(vals.slice(1), equation, possibleOps);
+
+    // Use those operations to get an output number from the values
+    // and return true if any of them match our result for the line
     for (const equation of equations) {
         const total = equation.reduce((prev, {val, op}) => {
+            switch(op) {
+                case '+': return prev + val;
+                case '*': return prev * val;
+                case '|': return parseInt(`${prev}${val}`, 10);
+            }
             return op === '+' ? prev + val : prev * val;
         }, 0);
         if(total === res) {
@@ -53,13 +62,17 @@ function isValid({res, vals}) {
     return false;
 }
 
-function expandOps(vals, ops = []) {
+/**
+ * Recursively combine each value with one of the various operators
+ * and return the full set of permutations
+ */
+function expandOps(vals, equation = [], possibleOps) {
     if(!vals.length) {
-        return [ops];
+        return [equation];
     }
     const currVal = vals[0];
-    return ['+', '*'].flatMap(op => {
-        return expandOps(vals.slice(1), [...ops, {val: currVal, op}])
+    return possibleOps.flatMap(op => {
+        return expandOps(vals.slice(1), [...equation, {val: currVal, op}], possibleOps)
     });
 }
 
