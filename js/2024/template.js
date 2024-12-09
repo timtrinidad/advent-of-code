@@ -1,4 +1,4 @@
-const { NotImplemented, run } = require('aoc-copilot');
+const { run } = require('aoc-copilot');
 
 async function solve(inputs, partNum, isSample) {
     const parsed = parse(inputs);
