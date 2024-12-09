@@ -51,8 +51,6 @@ function part1(list) {
             currSpace.value.id = currFile.value.id;
             currSpace.value.len = fileLen;
             const remainingSpace = new Node({id: undefined, len: spaceLen - fileLen}, currSpace, currSpace.next, list);
-            currSpace.next.prev = remainingSpace;
-            currSpace.next = remainingSpace;
             // Set the remaining file length to 0
             currFile.value.len = 0;
         }
@@ -68,6 +66,54 @@ function part1(list) {
         }
     }
 
+    return calculateChecksum(list);
+}
+
+function part2(list) {
+    // Start with the last file
+    let currFile = list.tail.value.id !== undefined ? list.tail : list.tail.prev;
+
+    // Iterate through all the files left to right until we're at the beginning of the list
+    while (currFile.prev) {
+        const prevFile = currFile.prev;
+
+        if(currFile.value.id === undefined) {
+            // Skip if this is an empty space
+            currFile = prevFile;
+            continue;
+        }
+
+        const fileLen = currFile.value.len;
+
+        // Iterate through all available spaces
+        let candidate = list.head;
+        while(candidate.next && candidate !== currFile) {
+            const candidateLen = candidate.value.len;
+            if (candidate.value.id === undefined && candidateLen >= fileLen) {
+                // Is a space and is big enough
+                // Update its id to be that of the current file
+                candidate.value.id = currFile.value.id;
+                candidate.value.len = fileLen;
+
+                // If the space is bigger than the file, create a new node for the remaining space
+                if(candidateLen > fileLen) {
+                    const remainingSpace = new Node({id: undefined, len: candidateLen - fileLen}, candidate, candidate.next, list);
+                }
+
+                // Mark the old pointer to be an empty space
+                currFile.value.id = undefined
+                break;
+            }
+            candidate = candidate.next;
+        }
+
+        currFile = prevFile;
+    }
+
+    return calculateChecksum(list);
+}
+
+function calculateChecksum(list) {
     // Calculate the checksum by multiplying block IDs with fileIds
     let blockId = 0;
     let sum = 0;
@@ -79,12 +125,7 @@ function part1(list) {
         }
         blockId += len;
     });
-
     return sum;
-}
-
-function part2(parsed) {
-    return 0;
 }
 
 run(__filename, solve);
