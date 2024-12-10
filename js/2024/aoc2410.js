@@ -5,7 +5,7 @@ const DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1]];
 async function solve(inputs, partNum, isSample) {
     
     // overwrite sample
-    if(partNum === 1 && isSample) {
+    if(isSample) {
         inputs = 
 `89010123
 78121874
@@ -23,7 +23,6 @@ async function solve(inputs, partNum, isSample) {
 
 function parse(inputs) {
     const trailHeads = [];
-    const peaks = [];
     const map = new Map();
     for (let x = 0; x < inputs[0].length; x++) {
         for (let y = 0; y < inputs.length; y++) {
@@ -32,31 +31,32 @@ function parse(inputs) {
             if(elev === 0) {
                 trailHeads.push([x, y]);
             }
-            if(elev === 9) {
-                peaks.push([x, y]);
-            }
         }
     }
-    return {map, trailHeads, peaks};
+    return {map, trailHeads};
 }
 
 function part1({map, trailHeads}) {
     let sum = 0;
     for (const [x, y] of trailHeads) {
-        const num = traverse(map, x, y);
-        sum += new Set(num.map(mapKey)).size;
+        const peaks = traverse(map, x, y);
+        sum += new Set(peaks.map(mapKey)).size;
     };
     return sum;
 }
 
-function part2(parsed) {
-    return 0;
+function part2({map, trailHeads}) {
+    let sum = 0;
+    for (const [x, y] of trailHeads) {
+        const peaks = traverse(map, x, y);
+        sum += peaks.length;
+    };
+    return sum;
 }
 
 function traverse(map, currX, currY, path = []) {
     const currElev = map.get(mapKey(currX, currY));
     if (currElev === 9) {
-        // console.log(path);
         return [[currX, currY]];
     }
 
