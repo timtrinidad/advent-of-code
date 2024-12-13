@@ -20,44 +20,23 @@ function parse(inputs) {
 }
 
 function part1(games) {
-    const res = games.map(x => findPrizeCost(x, 0, 0, new Map()));
+    const res = games.map(x => getGamePrice(x));
     return res.reduce((prev, curr) => prev + curr);
 }
 
-function part2(parsed) {
-    return 0;
+function part2(games) {
+    const res = games.map(x => getGamePrice({...x, px: x.px + 10000000000000, py: x.py + 10000000000000}));
+    return res.reduce((prev, curr) => prev + curr);
 }
 
-function findPrizeCost(game, numA, numB, cache) {
-    const cacheKey = `${numA},${numB}`;
-    const c = cache.get(cacheKey);
-    if(c !== undefined) {
-        return c;
+function getGamePrice({ax, ay, bx, by, px, py}) {
+    const b = (ax * py - px*ay) / (ax * by - bx*ay);
+    const a = (px - b*bx)/ax;
+   
+    if(a % 1 < .00000001 && b % 1 < .00000001) {
+        return a * 3 + b;
     }
-
-    const currX = game.ax * numA + game.bx * numB;
-    const currY = game.ay * numA + game.by * numB;
-    let res;
-    if(currX == game.px && currY == game.py) {
-        res = numA * 3 + numB;
-    }
-    else if(currX > game.px || currY > game.py) {
-        res = null;
-    } else {
-        const g1 = numA < 100 ? findPrizeCost(game, numA + 1, numB, cache) : null;
-        const g2 = numB < 100 ? findPrizeCost(game, numA, numB + 1, cache) : null;
-        
-        if (!g2) {
-            res = g1;
-        }
-        else if(!g1) {
-            res = g2;
-        } else {
-            res = g1 < g2 ? g1 : g2;
-        }
-    }
-    cache.set(cacheKey, res);
-    return res;
+    return 0;
 }
 
 run(__filename, solve);
