@@ -3,7 +3,7 @@ const { run } = require('aoc-copilot');
 const DIRS = [[0,1], [0,-1], [1,0], [-1,0]];
 
 async function solve(inputs, partNum, isSample) {
-    if(isSample && partNum === 1) {
+    if(isSample) {
 inputs = `RRRRIICCFF
 RRRRIICCCF
 VVRRRCCFFF
@@ -39,12 +39,15 @@ function part1({map, width, height}) {
     // return prices.reduce((prev, curr) => prev + curr);
     const regions = getRegions(map, width, height);
     return regions
-        .map(region => region.size * getPerimeter(map, region))
+        .map(region => region.regionSet.size * getPerimeter(map, region))
         .reduce((prev, curr) => prev + curr)
 }
 
-function part2(parsed) {
-    return 0;
+function part2({map, width, height}) {
+    const regions = getRegions(map, width, height);
+    return regions
+        .map(region => region.regionSet.size * getCorners(map, width, height, region))
+        .reduce((prev, curr) => prev + curr)
 }
 
 const mapKey = (x, y) => `${x},${y}`;
@@ -64,7 +67,12 @@ function getRegions(map, width, height) {
             for (const xy of region) {
                 seen.add(xy);
             }
-            regions.push(region);
+            const regionList = [...region.values()].map(parseMapKey);
+            regions.push({
+                regionSet: region,
+                regionList,
+                regionType: map.get(mapKey(regionList[0][0], regionList[0][1])),
+            });
         }
     }
     return regions;
@@ -89,18 +97,55 @@ function floodFill(map, x, y, type) {
     return region;
 }
 
-function getPerimeter(map, region) {
+function getPerimeter(map, {regionList, regionType}) {
     let perimiter = 0;
-    const regionPoints = [...region.values()].map(parseMapKey);
-    const type = map.get(mapKey(regionPoints[0][0], regionPoints[0][1]));
-    for(const [x, y] of regionPoints) {
+    for(const [x, y] of regionList) {
         for (const [dx, dy] of DIRS) {
-            if(map.get(mapKey(x + dx, y + dy)) !== type) {
+            if(map.get(mapKey(x + dx, y + dy)) !== regionType) {
                 perimiter++;
             }
         }
     }
     return perimiter;
+}
+
+function getCorners(map, width, height, {regionSet, regionType}) {
+    let numCorners = 0;
+    for (let x = -1; x < width; x++) {
+        for (let y = -1; y < height; y++) {
+            const cornerPts = [[0, 0], [1, 0], [1, 1], [0, 1]].map(([dx, dy]) => {
+                return regionSet.has(mapKey(x + dx, y + dy)) ? '1' : '0'
+            }).join('');
+            switch (cornerPts) {
+                case '0000':
+                case '1100':
+                case '0011':
+                case '0110':
+                case '1001':
+                case '1111':
+                    break;
+                case '1000':
+                case '0100':
+                case '0010':
+                case '0001':
+                case '0111':
+                case '1011':
+                case '1101':
+                case '1110':
+                    numCorners++;
+                    break;
+                case '1010':
+                case '0101':
+                    numCorners += 2;
+                    break;
+                default:
+                    throw new Error('Unknown: ' + cornerPts);
+            }
+        }
+    }
+
+    return numCorners
+
 }
 
 run(__filename, solve);
