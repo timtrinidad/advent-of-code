@@ -46,33 +46,30 @@ function part1({robots, width, height}) {
 function part2({robots, width, height}) {
     let i = 0;
     let isMirror;
-    do {
-        i++
+    const iterations = [];
+
+    for (let i = 1; i <= 101 * 103; i++) {
         robots = moveRobots(robots, width, height);
 
-        const rowMap = new Map();
-        robots.forEach(({p: [x, y]}) => {
-            const side = x < 50 ? 'L' : 'R';
-            const k = `${y}${side}`;
-            rowMap.set(k, (rowMap.get(k) || 0) + 1);
-        });
-        isMirror = true;
-        for (let y = 0; y < height; y++) {
-            if(rowMap.get(`${y}L`) !== rowMap.get(`${y}R`)) {
-                isMirror = false;
-                break;
+        const rset = new Set(robots.map(({p: [x, y]}) => `${x},${y}`));
+        for (let row = 0; row < height; row++) {
+            let numContinuous = 0;
+            for (let col = 0; col < width; col++) {
+                if(rset.has(`${col},${row}`) && rset.has(`${col-1},${row}`)) {
+                    numContinuous++;
+                } else {
+                    numContinuous = 0;
+                }
+                if(numContinuous > 5)
+                    console.log(i, numContinuous)
+                if(numContinuous >= 10) {
+                    return i;
+                }
             }
         }
 
-        // Recognized a cluster formed (not always a christmas tree) every 69 + 101x iterations,
-        // so just render those
-        if(i % 101 === 69) {
-            renderRobots(robots, height, width)
-            console.log("---"+i)
-        }
-
-        // All the posisions seem to loop after 101*103 times, so don't go past that
-    } while (!isMirror && i < 10403);
+    }
+    console.log(iterations.reduce((prev, curr) => prev[1] >= curr[1] && prev[0] < curr[0] ? prev : curr))
 
     // Not the actual answer - the actual iteration would be determined by actually looking through
     // the rendered output
