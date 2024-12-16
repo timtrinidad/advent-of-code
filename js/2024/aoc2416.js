@@ -58,10 +58,12 @@ function parse(inputs) {
                         continue;
                     }
                     const neighborPt = inputs[newY][newX];
-                    if (neighborPt !== '.' && neighborPt !== 'E') {
-                        continue;
+                    if (neighborPt === '.') {
+                        neighbors[mapKey(x + dx2, y + dy2)+dn2] = dn1 === dn2 ? 1 : 1001;
+                    } else if (neighborPt === 'E') {
+                        neighbors[mapKey(x + dx2, y + dy2)+"-"] = 1;
                     }
-                    neighbors[mapKey(x + dx2, y + dy2)+dn2] = dn1 === dn2 ? 1 : 1001;
+
                 }
                 graph.addNode(mapKey(x, y)+dn1, neighbors);
             }
@@ -71,15 +73,18 @@ function parse(inputs) {
 }
 
 function part1({graph, startPt, endPt}) {
-
-    return DIRS.map(([dn, dx, dy]) => {
-        const path = graph.path(mapKey(startPt[0], startPt[1]) + 'E', mapKey(endPt[0], endPt[1]) + dn, {cost: true});
-        return path.cost;
-    }).filter(x => x !== 0).reduce((prev, curr) => prev < curr ? prev : curr);
+    const path = graph.path(mapKey(startPt[0], startPt[1]) + 'E', mapKey(endPt[0], endPt[1]) + '-', {cost: true});
+    return path.cost;
 }
 
-function part2(parsed) {
-    return 0;
+function part2({graph, startPt, endPt}) {
+    const path = graph.path(mapKey(startPt[0], startPt[1]) + 'E', mapKey(endPt[0], endPt[1]) + '-', {cost: true});
+    const altPaths = path.path.slice(1, path.path.length-1).map(pt =>
+        graph.path(mapKey(startPt[0], startPt[1]) + 'E', mapKey(endPt[0], endPt[1]) + '-', {cost: true, avoid: [pt]}))
+    const seen = new Set();
+    path.path.forEach(x => seen.add(x.slice(0, -1)))
+    altPaths.forEach(altPath => altPath.path && altPath.cost === path.cost && altPath.path.forEach(x => seen.add(x.slice(0, -1))))
+    return seen.size;
 }
 
 run(__filename, solve);
