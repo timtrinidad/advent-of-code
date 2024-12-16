@@ -179,6 +179,11 @@ is-fullwidth-code-point@^3.0.0:
   resolved "https://registry.yarnpkg.com/is-fullwidth-code-point/-/is-fullwidth-code-point-3.0.0.tgz#f116f8064fe90b3f7844a38997c0b75051269f1d"
   integrity sha512-zymm5+u+sCsSWyD9qNaejV3DFvhCKclKdizYaJUuHA83RLjb7nSuGnddCHGv0hk+KY7BMAlsWeK4Ueg6EV6XQg==
 
+node-dijkstra@^2.5.0:
+  version "2.5.0"
+  resolved "https://registry.yarnpkg.com/node-dijkstra/-/node-dijkstra-2.5.0.tgz#0feb76c5a05f35b56e786de6df4d3364af28d4e8"
+  integrity sha512-2REYb1lo8yDRAY1gsdhjwQdGVSh47VI5Z5wS8sCqydO/P1OVAKOwLuV1fDxNLvbrtMspW7k2UZ2JKIKP06hl+A==
+
 nth-check@^2.0.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/nth-check/-/nth-check-2.1.1.tgz#c9eab428effce36cd6b92c924bdb000ef1f1ed1d"
