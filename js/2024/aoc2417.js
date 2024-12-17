@@ -25,15 +25,43 @@ function part1({registers, instructions}) {
     return res.join(',');
 }
 
-function part2(parsed) {
-    return 0;
+function part2({registers, instructions}) {
+    let isMatch = false;
+    let regA = 38895504088832;
+    let lastLen = 0;
+    do {
+        regA--;
+        if (regA % 1000000 === 0) {
+            console.log(regA);
+        }
+        registers = {A: regA, B: 0, C: 0};
+        const res = evaluate(registers, instructions);
+        // if(res.length ) {
+        //     console.log(regA, res.length, res.join(','));
+        //     lastLen = res.length;
+        // }
+        isMatch = res.length === instructions.length && (res.every((x, i) => instructions[i] === x))
+    } while (!isMatch)
+    // console.log(evaluate({A: 38842779000000, B: 0, C:0}, instructions));
+
+    return regA;
 }
 
+const seen = new Set();
 function evaluate(registers, instructions, instPtr = 0, out = []) {
+    // console.log(registers);
     if(instPtr >= instructions.length) {
         // Halt
         return out;
     }
+
+    // const seenKey = `${registers.B},${registers.C},${instPtr}`;
+    // console.log(seenKey);
+    // if (seen.has(seenKey)) {
+    //     // console.log('loop');
+    //     return [];
+    // }
+    // seen.add(seenKey);
 
     const instruction = instructions[instPtr];
     const literalOperand = instructions[instPtr + 1];
@@ -58,7 +86,11 @@ function evaluate(registers, instructions, instPtr = 0, out = []) {
             registers.B = registers.B ^ registers.C;
             break;
         case 5:
-            out.push(getComboOperand(registers, literalOperand) % 8);
+            const toOut = getComboOperand(registers, literalOperand) % 8;
+            if(toOut !== instructions[out.length]) {
+                return [];
+            }
+            out.push(toOut);
             break;
         case 6:
             registers.B = Math.floor(registers.A / Math.pow(2, getComboOperand(registers, literalOperand)));
@@ -89,4 +121,4 @@ function getComboOperand(registers, comboType) {
     }
 }
 
-run(__filename, solve, {skipTests: true});
+run(__filename, solve, {skipTests: true, onlyPart: 2});
