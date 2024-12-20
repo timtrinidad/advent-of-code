@@ -1,5 +1,5 @@
 const { run } = require('aoc-copilot');
-const { mapKey, parseMapKey } = require('../utils');
+const { mapKey, parseMapKey, DIRS4, DIRS8 } = require('../utils');
 
 async function solve(inputs, partNum, isSample) {
     const parsed = parse(inputs);
@@ -8,10 +8,11 @@ async function solve(inputs, partNum, isSample) {
 }
 
 function parse(inputs) {
-    return [];
+    return inputs;
 }
 
 function part1(parsed) {
+    console.log(parsed);
     return 0;
 }
 
