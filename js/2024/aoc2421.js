@@ -17,10 +17,10 @@ function parse(inputs, isSample) {
 
 function part1(parsed) {
     return parsed.map(btns => {
-        const res1 = numRobot(btns);
-        const res2 = res1.flatMap(i => dirRobot(i));
-        const res3 = res2.flatMap(i => dirRobot(i));
-        const len = Math.min(...res3.map(x => x.length));
+        let res = numRobot(btns)[0];
+        res = dirRobot(res);
+        res = dirRobot(res);
+        len = res.length;
 
 
         const num = parseInt(btns.join(''));
@@ -31,7 +31,25 @@ function part1(parsed) {
 }
 
 function part2(parsed) {
-    return 0;
+    return parsed.map(btns => {
+        let res = numRobot(btns);
+        res = res.flatMap(i => dirRobot(i));
+        res = res.flatMap(i => dirRobot(i));
+        // res = res.flatMap(i => dirRobot(i, true));
+        // res = res.flatMap(i => dirRobot(i, true));
+        // res = res.flatMap(i => dirRobot(i, true));
+        // res = res.flatMap(i => dirRobot(i, true));
+        // res = res.flatMap(i => dirRobot(i, true));
+        // res = res.flatMap(i => dirRobot(i, true));
+        // res = res.flatMap(i => dirRobot(i, true));
+        // res = res.flatMap(i => dirRobot(i, true));
+        const len = Math.min(...res.map(x => x.length));
+
+
+        const num = parseInt(btns.join(''));
+        console.log(len, num);
+        return len * num
+    }).reduce((prev, curr) => prev + curr)
 }
 
 const NUM_KEYPAD = {
@@ -88,13 +106,13 @@ function numRobot(buttons, first = false) {
         const dy = targetY - y;
 
         if (dx) {
-            queue.push([x + dx, y, remainingBtns, [...pressed, ...Array(Math.abs(dx)).fill(dx > 0 ? '>' : '<')]]);
+            queue.unshift([x + dx, y, remainingBtns, [...pressed, ...Array(Math.abs(dx)).fill(dx > 0 ? '>' : '<')]]);
         }
         if (dy) {
-            queue.push([x, y + dy, remainingBtns, [...pressed, ...Array(Math.abs(dy)).fill(dy > 0 ? 'v' : '^')]]);
+            queue.unshift([x, y + dy, remainingBtns, [...pressed, ...Array(Math.abs(dy)).fill(dy > 0 ? 'v' : '^')]]);
         }
         if (!dx && !dy) {
-            queue.push([x, y, remainingBtns.slice(1), [...pressed, 'A']]);
+            queue.unshift([x, y, remainingBtns.slice(1), [...pressed, 'A']]);
         }
 
     }
@@ -102,50 +120,24 @@ function numRobot(buttons, first = false) {
     return shortests;
 }
 
-function dirRobot(buttons, first = false) {
-    const queue = [[2, 0, buttons, []]];
-
-    const shortests = [];
-    let shortestLength;
-    let q;
-    while(q = queue.shift()) {
-        const [x, y, remainingBtns, pressed] = q;
-
-        if(x === 0 && y === 0) {
-            continue;
-        }
-
-        if(!remainingBtns.length) {
-            if(!shortestLength) {
-                shortestLength = pressed.length;
-            }
-            
-            if(pressed.length == shortestLength) {
-                shortests.push(pressed);
-                if(first) {
-                    return shortests;
-                }
-            }
-            continue;
-        }
-
-        const [targetX, targetY] = DIR_KEYPAD[remainingBtns[0]];
-        const dx = targetX - x;
-        const dy = targetY - y;
-
-        if (dx) {
-            queue.push([x + dx, y, remainingBtns, [...pressed, ...Array(Math.abs(dx)).fill(dx > 0 ? '>' : '<')]]);
-        }
-        if (dy) {
-            queue.push([x, y + dy, remainingBtns, [...pressed, ...Array(Math.abs(dy)).fill(dy > 0 ? 'v' : '^')]]);
-        }
-        if (!dx && !dy) {
-            queue.push([x, y, remainingBtns.slice(1), [...pressed, 'A']]);
-        }
-
+function dirRobot(buttons, x = 2, y = 0) {
+    if(!buttons.length) {
+        return [];
     }
 
-    return shortests;
+    const [targetX, targetY] = DIR_KEYPAD[buttons[0]];
+    const dx = targetX - x;
+    const dy = targetY - y;
+
+    if (dx) {
+        return [...Array(Math.abs(dx)).fill(dx > 0 ? '>' : '<'), ...dirRobot(buttons, x + dx, y)]
+    }
+    if (dy) {
+        return [...Array(Math.abs(dy)).fill(dy > 0 ? '>' : '<'), ...dirRobot(buttons, x, y + dy)]
+    }
+    return ['A', ...dirRobot(buttons.slice(1), x, y)];
+
+
 }
 
-run(__filename, solve); 
+run(__filename, solve, {onlyPart: 1, testsOnly: true}); 
