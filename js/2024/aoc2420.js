@@ -18,6 +18,7 @@ function parse(inputs) {
     for (let x = 0; x < width; x++) {
         for (let y = 0; y < height; y++) {
             let pt = inputs[y][x];
+            // Keep track of the start/end
             if(pt === "E") { start = [x, y]; pt = '.'; }
             if(pt === "S") { end = [x, y]; pt = '.'; }
             if(pt === '#') { walls.push([x, y]); }
@@ -76,8 +77,55 @@ function part1({graph, start, end, walls}) {
     return numSavedGt100;
 }
 
-function part2(parsed) {
-    return 0;
+function part2({graph, start, end, walls}) {
+    // Get the main ideal path
+    const basePath = graph.path(mapKey(...start), mapKey(...end));
+    const pathMap = new Map();
+    basePath.forEach((pt, i) => {
+        pathMap.set(pt, i);
+    });
+
+    // For each point on the path, look around for all points on the
+    // path that are up to 20 picoseconds away
+    let num = 0;
+    let nums = {};
+    basePath.forEach((pt, i) => {
+        const [x, y] = parseMapKey(pt);
+        const currPos = pathMap.get(pt);
+        for (let dx = -20; dx <= 20; dx++) {
+            for (let dy = -20; dy <= 20; dy++) {
+                const newDist = Math.abs(dx) + Math.abs(dy);
+                if(newDist > 20) {
+                    continue;
+                }
+                const x1 = x + dx;
+                const y1 = y + dy;
+                const newPos = pathMap.get(mapKey(x1, y1));
+                // This point is not on the path
+                if(newPos === undefined) {
+                    continue;
+                }
+                // This is a step backwards
+                const oldDist = newPos - currPos;
+                if(oldDist <= 0) {
+                    continue;
+                }
+                
+                // Compare the original distance to the new one with the cheat
+                const diff = oldDist - newDist;
+
+                if(diff > 0) {
+                    nums[diff] = (nums[diff] || 0) + 1
+                }
+                if(diff >= 100) {
+                    num++;
+                }
+            }
+        }
+    });
+
+    console.log(nums);
+    return num;
 }
 
-run(__filename, solve, {skipTests: true, testsOnly: false, partNum: 1});
+run(__filename, solve, {skipTests: true, testsOnly: false});
