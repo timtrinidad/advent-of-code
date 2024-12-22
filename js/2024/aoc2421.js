@@ -77,37 +77,15 @@ function part1(parsed, numDirRobots = 2) {
         const numRes = numRobot(code);
         
         let minLen;
-        // Iterate through all possible L1 robot button presses to find the lowest total number of button presses
+        // Iterate through all possible num robot button presses to find the lowest total number of button presses
         for (let res of numRes) {
-
-            // Create a list of button pairs and put them into a map, counting each pair
-            let pairsMap = new Map();
             res.unshift('A');
+            
+            let len = 0;
+            // Expand each pair of button moves all the way to a depth of 25 to get a count
             for (let i = 1; i < res.length; i++) {
-                const pair = `${res[i-1]},${res[i]}`;
-                pairsMap.set(pair, (pairsMap.get(pair) || 0) + 1);
+                len += dirMove(res[i-1], res[i], 25);
             }
-
-            let num = numDirRobots;
-            while (num--) {
-                const newPairsMap = new Map();
-                
-                // Similar to lanternfish - create a new pair map by expanding each pair based on the
-                // optimal DIR_MOVES_MAP, incrementing by the number of times that pair was found
-                // in the original map
-                for (const [pair, pairCount] of pairsMap) {
-                    const pattern = ['A', ...DIR_MOVES_MAP.get(pair)];
-                    for (let i = 1; i < pattern.length; i++) {
-                        const patternPair = `${pattern[i-1]},${pattern[i]}`;
-                        newPairsMap.set(patternPair, (newPairsMap.get(patternPair) || 0) + pairCount );
-                    }
-                }
-
-                pairsMap = newPairsMap;
-            }
-
-            // Count the number of total pairs
-            const len = [...pairsMap.values()].reduce((prev, curr) => prev + curr);
 
             // Keep track of the lowest total length for the given code
             if (minLen === undefined || len < minLen) {
@@ -171,6 +149,41 @@ function numRobot(buttons) {
     }
 
     return options;
+}
+
+/**
+ * Given a given source and destination button, return a count
+ * of number of buttons at the given depth
+ */
+function dirMove(from, to, targetDepth, depth = 1, cache = new Map()) {
+    // Memoize
+    const cacheKey = `${from},${to},${depth}`;
+    const cacheRes = cache.get(cacheKey);
+    if(cacheRes !== undefined) {
+        return cacheRes;
+    }
+
+    // Get optimal path for the given button pair
+    const expanded = DIR_MOVES_MAP.get(`${from},${to}`);
+    
+    // If we're at the target depth, nothing left to expand. Return the number of moves
+    // needed at this level from "from" to "to"
+    if(depth === targetDepth) {
+        cache.set(cacheKey, expanded.legnth);
+        return expanded.length;
+    }
+
+    // Set the next robot to start from 'A'
+    const dirs = ['A', ...expanded];
+
+    // Recurse down to the requested depth for each button pair
+    let sum = 0;
+    for (let i = 1; i < dirs.length; i++) {
+        sum += dirMove(dirs[i-1], dirs[i], targetDepth, depth + 1, cache);
+    }
+
+    cache.set(cacheKey, sum);
+    return sum;
 }
 
 run(__filename, solve, {skipTests: true}); 
