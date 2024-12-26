@@ -10,7 +10,10 @@
                 "2024/aoc${input:dateString}.js"
             ],
             "problemMatcher": [],
-            "runOptions": { "reevaluateOnRerun": false}
+            "runOptions": { "reevaluateOnRerun": false, "instanceLimit":  },
+            "presentation": {
+                "clear": true,
+            },
         }
     ],
     "inputs": [
