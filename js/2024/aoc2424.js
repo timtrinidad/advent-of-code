@@ -111,8 +111,8 @@ function part1({inits, conns, zLen}) {
 }
 
 function part2({inits, conns, zLen}) {
-    // const values = new Map(inits.entries());
-    const values = new Map([
+    const values2 = new Map(inits.entries());
+    let valueEntries = [
         ["x00",false],
         ["x01",false],
         ["x02",false],
@@ -136,7 +136,7 @@ function part2({inits, conns, zLen}) {
         ["x20",false],
         ["x21",false],
         ["x22",false],
-        ["x23",true],
+        ["x23",false],
         ["x24",false],
         ["x25",false],
         ["x26",false],
@@ -204,30 +204,86 @@ function part2({inits, conns, zLen}) {
         ["y42",false],
         ["y43",false],
         ["y44",false],
-    ]);
-    calculateZValues(values, conns, zLen);
-    console.log(binToInt(values, 'z'));
-    console.log(JSON.stringify(Array.from(getDependencies(conns, 'z01').values()).reverse()))
-    console.log(JSON.stringify(Array.from(getDependencies(conns, 'z02').values()).reverse()))
-    console.log(JSON.stringify(Array.from(getDependencies(conns, 'z03').values()).reverse()));
+    ];
+    for (let i = 0; i <= 44; i++) {
+        const key = `y${String(i).padStart(2, '0')}`;
+        const values = new Map(valueEntries);
+        values.set(key, true);
+        calculateZValues(values, conns, zLen, new Map([
+            ['z23', 'bks'], ['bks', 'z23'], 
+            ['z16', 'tdv'], ['tdv', 'z16'],
+            ['tjp', 'nrn'], ['nrn', 'tjp'],
+            ['z09', 'hnd'], ['hnd', 'z09'],
+        ]));
+        console.log(i, binToInt(values, 'z'));
+        console.log(i, Math.log2(binToInt(values, 'z')));
+    }
+    
 
-    // console.log(Array.from(getDependencies(conns, 'z20')).length);
-    // console.log(Array.from(getDependencies(conns, 'z21')).length);
-    // console.log(Array.from(getDependencies(conns, 'z22')).length);
-    // console.log(Array.from(getDependencies(conns, 'z23')).length);
-    // console.log(Array.from(getDependencies(conns, 'z24')).length);
-    // console.log(Array.from(getDependencies(conns, 'z25')).length);
+    // const okConns = [...getDependencies(conns, 'z37').values()];
+    // const potentialConns = new Set(conns.keys());
+    // okConns.forEach(x => potentialConns.delete(x));
+    // potentialConns.delete('z37');
+    // console.log(potentialConns)
+    // for (const conn of potentialConns) {
+    //     const connsNew = new Map(conns.entries());
+    //     const a = connsNew.get('z23');
+    //     const b = connsNew.get(conn);
+    //     connsNew.set('z23', b);
+    //     connsNew.set(conn, a);
+    //     if( getDependencies(connsNew, 'z23').size === 136) {
+    //         console.log(conn);
+    //     }
+    // }
+
+    const connsNew = new Map(conns.entries());
+    connsNew.set('z23', conns.get('bks'));
+    connsNew.set('bks', conns.get('z23'));
+    connsNew.set('z16', conns.get('tdv'));
+    connsNew.set('tdv', conns.get('z16'));
+    connsNew.set('tjp', conns.get('nrn'));
+    connsNew.set('nrn', conns.get('tjp'));
+    connsNew.set('z09', conns.get('hnd'));
+    connsNew.set('hnd', conns.get('z09'));
+    
+
+    let prev = [];
+    for (let i = 1; i < 44; i++) {
+        const k = `z${String(i).padStart(2,'0')}`;
+        const deps = getDependencies(connsNew, k);
+        const originalDeps = [...deps.values()];
+        prev.forEach(p => deps.delete(p));
+        console.log(k, [...deps.values()]);
+        prev = originalDeps;
+    }
+
+    const z15Deps = getDependencies(connsNew, 'z15');
+    for (const out of connsNew.keys()) {
+        const deps = getDependencies(connsNew, out);
+        for (const z15dep of z15Deps) {
+            deps.delete(z15dep);
+        }
+        if(deps.size === 10) {
+            // console.log(out);
+        }
+    }
+
+    // console.log(Array.from(getDependencies(conns, 'z01')).reverse().join(','));
+    // console.log(Array.from(getDependencies(conns, 'z02')).reverse().join(','));
+    // console.log(Array.from(getDependencies(conns, 'z37')).reverse().join(','));
+    // console.log(Array.from(getDependencies(conns, 'z38')).reverse().join(','));
     // console.log(getDependents(conns, 'x'));
-    console.log(conns.get('z23'));
-    return 1;
+    // console.log(conns.get('z23'));
     
     // const values = new Map(inits.entries());
-    calculateZValues(values, conns, zLen);
-    const [xVal, yVal, zVal] = ['x', 'y', 'z'].map(prefix => binToInt(values, prefix));
-    console.log(xVal, yVal, zVal);
-    const expectedZVal = xVal + yVal;
+    // calculateZValues(values, conns, zLen);
+    // const [xVal, yVal, zVal] = ['x', 'y', 'z'].map(prefix => binToInt(values, prefix));
+    // console.log(xVal, yVal, zVal);
+    // const expectedZVal = xVal + yVal;
 
-    // switchConnections(inits, conns, zLen, expectedZVal, 8);
+    // switchConnections(inits, conns, zLen, expectedZVal, 8, new Map([            ['z23', 'bks'], ['bks', 'z23'], 
+    //     ['z16', 'tdv'], ['tdv', 'z16'],
+    //     ['tjp', 'nrn'], ['nrn', 'tjp'],]));
 
 
     // const values = new Map(inits.entries());
@@ -264,17 +320,36 @@ function part2({inits, conns, zLen}) {
     //     }
     // }
 
+    return ['z23', 'bks', 'z16', 'tdv', 'z09', 'hnd', 'tjp', 'nrn'].sort().join(',');
+
+    return 1;
+
 }
 
 function switchConnections(inits, conns, zLen, expectedVal, numSwitches, switches = new Map()) {
     const values = new Map(inits.entries());
-    console.log(switches.entries())
+    if(switches.size === 6) {
+        console.log(switches.entries())
+    }
     calculateZValues(values, conns, zLen, switches);
     if(binToInt(values, 'z') === expectedVal) {
         console.log(expectedVal, switches);
     }
 
-    const outputs = [...conns.keys()];
+    let outputs = new Set(conns.keys());
+    // console.log(outputs.size)
+    const excludedOutputs = getDependencies(conns, 'z36');
+    for (const excludedOutput of excludedOutputs) {
+        outputs.delete(excludedOutput);
+    }
+    for (let i = 0; i < 36; i++) {
+        outputs.delete(`z${String(i).padStart(2, '0')}`);
+    }
+    outputs = [...outputs.values()];
+    // console.log(outputs.length);
+    // throw new Error();
+
+
     if(switches.size < numSwitches) {
         for (let i = 0; i < outputs.length-1; i++) {
             for (let j = i + 1; j < outputs.length; j++) {
@@ -352,13 +427,13 @@ function calculateZValues(values, conns, zLen, switches = new Map()) {
 function getDependencies(conns, key, deps = new Set()) {
     const dependencies = conns.get(key);
     if(!dependencies) {
-        deps.add(key);
+        // deps.add(key);
         return;
     }
-    const { in1, in2 } = dependencies
+    const { in1, in2, op } = dependencies
 
-    deps.add(in1);
-    deps.add(in2);
+    deps.add(`${in1}-${op}`);
+    deps.add(`${in2}-${op}`);
     getDependencies(conns, in1, deps);
     getDependencies(conns, in2, deps);
 
