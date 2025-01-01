@@ -24,6 +24,11 @@ mix aoc
 mix aoc -y [YYYY] -d [DD]
 ```
 
+Ensure to update the year you're working on in `mix.exs` (this ensures that old years aren't compiled unecessarily
+```
+elixirc_paths: ["lib/2024"]
+```
+
 # Run
 ```
 # Current day - Part 1 Example
