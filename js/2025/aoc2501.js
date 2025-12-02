@@ -24,7 +24,20 @@ function part1(parsed) {
 }
 
 function part2(parsed) {
-    return 0;
+    let i = 50;
+    let numZeros = 0;
+    parsed
+        .map(x => [x[0] === 'L' ? -1 : 1, parseInt(x.substring(1), 10)])
+        .forEach(([dir, x]) => {
+            while (x !== 0) {
+                i = (i + 100 + dir) % 100;
+                if (i === 0) {
+                    numZeros++;
+                }
+                x--;
+            }
+    });
+    return numZeros;
 }
 
 run(__filename, solve);
