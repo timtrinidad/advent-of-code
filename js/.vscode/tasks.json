@@ -7,20 +7,27 @@
         {
             "label": "run_aoc",
             "args": [
-                "2024/aoc${input:dateString}.js"
+                "2025/aoc${input:dateString}.js"
             ],
             "problemMatcher": [],
-            "runOptions": { "reevaluateOnRerun": false, "instanceLimit":  },
-            "presentation": {
-                "clear": true,
+            "runOptions": {
+                "reevaluateOnRerun": false,
+                "instanceLimit": 1
             },
+            "presentation": {
+                "clear": true
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         }
     ],
     "inputs": [
         {
             "type": "promptString",
             "id": "dateString",
-            "default": "2401",
+            "default": "2501",
             "description": "The date string (YYDD)"
         }
     ]
