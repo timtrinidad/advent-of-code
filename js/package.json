@@ -6,6 +6,7 @@
   "dependencies": {
     "aoc-copilot": "^1.6.0",
     "node-dijkstra": "^2.5.0",
+    "prettier": "^3.7.4",
     "yallist": "^5.0.0"
   }
 }
