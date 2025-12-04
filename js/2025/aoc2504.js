@@ -24,7 +24,24 @@ function parse(inputs) {
 }
 
 function part1({ map, width, height }) {
-  let num = 0;
+  const accessibleRolls = findAccessibleRolls(map, width, height);
+
+  return accessibleRolls.length;
+}
+
+function part2({ map, width, height }) {
+  let accessibleRolls;
+  let removedRolls = 0;
+  do {
+    accessibleRolls = findAccessibleRolls(map, width, height);
+    accessibleRolls.forEach(([x, y]) => map.set(mapKey(x, y), "."));
+    removedRolls += accessibleRolls.length;
+  } while (accessibleRolls.length > 0);
+  return removedRolls;
+}
+
+function findAccessibleRolls(map, width, height) {
+  const accessibleRolls = [];
   for (let x = 0; x < width; x++) {
     for (let y = 0; y < height; y++) {
       if (map.get(mapKey(x, y)) !== "@") {
@@ -37,15 +54,11 @@ function part1({ map, width, height }) {
         0
       );
       if (numSurrounding < 4) {
-        num++;
+        accessibleRolls.push([x, y]);
       }
     }
   }
-  return num;
-}
-
-function part2(parsed) {
-  return 0;
+  return accessibleRolls;
 }
 
 run(__filename, solve);
