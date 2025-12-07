@@ -11,13 +11,18 @@ function parse(inputs) {
   const map = new Map();
   const width = inputs[0].length;
   const height = inputs.length;
+  let start;
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      const char = inputs[y][x];
-      map.set(mapKey(x, y), char === "S" ? "|" : char);
+      let char = inputs[y][x];
+      if (char === "S") {
+        start = [x, y];
+        char = "|";
+      }
+      map.set(mapKey(x, y), char);
     }
   }
-  return { map, width, height };
+  return { map, width, height, start };
 }
 
 function part1({ height, width, map }) {
@@ -51,8 +56,40 @@ function part1({ height, width, map }) {
   }, 0);
 }
 
-function part2(parsed) {
-  return 0;
+function part2({ map, width, height, start: [startX, startY] }) {
+  return traverse(map, width, height, startX, startY);
+}
+
+// memoization
+const seen = new Map();
+
+function traverse(map, width, height, x, y) {
+  // Memoized value - we already know how many paths are possible from this position
+  const seenVal = seen.get(mapKey(x, y));
+  if (seenVal !== undefined) {
+    return seenVal;
+  }
+
+  // Reached the bottom - counts as one path
+  if (y === height - 1) {
+    return 1;
+  }
+
+  const charBelow = map.get(mapKey(x, y + 1));
+  let numPaths;
+
+  if (charBelow === ".") {
+    // No splitter below - just move down one spot
+    numPaths = traverse(map, width, height, x, y + 1);
+  } else {
+    // Splitter is below - split to two possible paths
+    numPaths =
+      traverse(map, width, height, x + 1, y + 1) +
+      traverse(map, width, height, x - 1, y + 1);
+  }
+
+  seen.set(mapKey(x, y), numPaths);
+  return numPaths;
 }
 
 function printMap(map, width, height) {
